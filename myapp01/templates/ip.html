@@ -1,0 +1,232 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+{% block content %}
+    <h1>IP地域分布分析</h1>
+    <div>
+        <div style="margin: 20px 0; display: flex; align-items: center;">
+            <label for="videoSelect">选择热搜视频：</label>
+            <select id="videoSelect" onchange="switchVideoData()">
+                <option value="0">#科目三舞蹈挑战</option>
+                <option value="1">#国产剧安利大赛</option>
+                <option value="2">#春节返乡见闻</option>
+            </select>
+        </div>
+
+        <!-- 地区分布图表 -->
+        <div class="chart-container">
+            <div class="chart-icons">
+                <img src="https://img.icons8.com/ios/50/000000/bar-chart.png" onclick="changeChartType('bar')" alt="柱状图">
+                <img src="https://img.icons8.com/ios/50/000000/line-chart.png" onclick="changeChartType('line')" alt="折线图">
+                <img src="https://img.icons8.com/ios/50/000000/download--v1.png" onclick="downloadChart(regionChart)" alt="下载">
+                <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" onclick="refreshChart(regionChart)" alt="刷新">
+            </div>
+            <div id="regionChart" style="width: 100%; height: 500px;"></div>
+        </div>
+
+        <!-- 中国地图IP分布图表 -->
+        <div class="chart-container">
+            <div class="chart-icons">
+                <img src="https://img.icons8.com/ios/50/000000/download--v1.png" onclick="downloadChart(chinaMapChart)" alt="下载">
+                <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" onclick="refreshChart(chinaMapChart)" alt="刷新">
+            </div>
+            <div id="chinaMapChart" style="width: 100%; height: 600px;"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        // 初始化图表
+        const regionChart = echarts.init(document.getElementById('regionChart'));
+        const chinaMapChart = echarts.init(document.getElementById('chinaMapChart'));
+
+        // 模拟数据
+        const videoData = [
+            { // 科目三舞蹈挑战
+                region: createRegionData(['广东', '浙江', '江苏', '山东', '河南'], [2500, 1800, 2100, 1600, 1400]),
+                map: createMapData({
+                    '广东': 2500,
+                    '浙江': 1800,
+                    '江苏': 2100,
+                    '山东': 1600,
+                    '河南': 1400
+                })
+            },
+            { // 国产剧安利大赛
+                region: createRegionData(['广东', '江苏', '四川', '湖北', '湖南'], [2100, 1900, 1700, 1500, 1300]),
+                map: createMapData({
+                    '广东': 2100,
+                    '江苏': 1900,
+                    '四川': 1700,
+                    '湖北': 1500,
+                    '湖南': 1300
+                })
+            },
+            { // 春节返乡见闻
+                region: createRegionData(['河南', '安徽', '江西', '湖南', '湖北'], [2800, 2200, 1900, 1700, 1500]),
+                map: createMapData({
+                    '河南': 2800,
+                    '安徽': 2200,
+                    '江西': 1900,
+                    '湖南': 1700,
+                    '湖北': 1500
+                })
+            }
+        ];
+
+        // 当前图表类型
+        let currentChartType = 'bar';
+
+        // 创建地区数据
+        function createRegionData(regions, values) {
+            return {
+                bar: createBarOption(regions, values),
+                line: createLineOption(regions, values)
+            };
+        }
+
+        // 创建柱状图配置
+        function createBarOption(regions, values) {
+            return {
+                title: { text: '地区分布TOP5', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: regions,
+                    axisLabel: { rotate: 45 }
+                },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: values,
+                    type: 'bar',
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: '#83bff6' },
+                            { offset: 1, color: '#007BFF' }
+                        ])
+                    }
+                }],
+                grid: { bottom: '20%' }
+            };
+        }
+
+        // 创建折线图配置
+        function createLineOption(regions, values) {
+            return {
+                title: { text: '地区趋势分析', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: regions,
+                    axisLabel: { rotate: 45 }
+                },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: values,
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: { width: 3 },
+                    itemStyle: { color: '#67E0E3' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(103,224,227,0.6)' },
+                            { offset: 1, color: 'rgba(103,224,227,0.1)' }
+                        ])
+                    }
+                }],
+                grid: { bottom: '20%' }
+            };
+        }
+
+        // 创建中国地图数据
+        function createMapData(data) {
+            return {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function (params) {
+                        return `${params.name}: ${params.value}`;
+                    }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 3000,
+                    left: 'left',
+                    top: 'bottom',
+                    text: ['高', '低'],
+                    calculable: true,
+                    inRange: {
+                        color: ['#e0ffff', '#006edd']
+                    }
+                },
+                series: [
+                    {
+                        name: 'IP分布',
+                        type: 'map',
+                        map: 'china',
+                        roam: true,
+                        label: {
+                            show: true,
+                            color: '#333'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                color: '#fff'
+                            },
+                            itemStyle: {
+                                areaColor: '#007BFF'
+                            }
+                        },
+                        data: Object.keys(data).map(region => ({
+                            name: region,
+                            value: data[region]
+                        }))
+                    }
+                ]
+            };
+        }
+
+        // 切换视频数据
+        function switchVideoData() {
+            const selected = document.getElementById('videoSelect').value;
+            const data = videoData[selected];
+
+            regionChart.setOption(data.region[currentChartType]);
+            chinaMapChart.setOption(data.map);
+        }
+
+        // 切换图表类型
+        function changeChartType(type) {
+            currentChartType = type;
+            const selected = document.getElementById('videoSelect').value;
+            regionChart.setOption(videoData[selected].region[type]);
+        }
+
+        // 下载图表
+        function downloadChart(chart) {
+            const a = document.createElement('a');
+            a.href = chart.getDataURL({ type: 'png', pixelRatio: 2 });
+            a.download = 'chart.png';
+            a.click();
+        }
+
+        // 刷新图表
+        function refreshChart(chart) {
+            chart.resize();
+        }
+
+        // 初始化显示
+        window.addEventListener('DOMContentLoaded', () => {
+            switchVideoData();
+            window.addEventListener('resize', () => {
+                regionChart.resize();
+                chinaMapChart.resize();
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'layout.html' %}
+{% load static %}
+{#-----------------------舆情数据统计----------------------------#}
+{% block css %}
+       <link rel="stylesheet" href="{% static 'css/hot_in.css' %}">
+    <style>
+        .dataTable tr:hover {
+            background-color: #dee2e6;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>热门视频热词数据</h1>
+    <div style="margin: 20px 0; display: flex; align-items: center;">
+        <label for="topicSelect">选择热门话题：</label>
+        <select id="topicSelect" onchange="switchTopicData()">
+            <option value="0">#科目三舞蹈挑战</option>
+            <option value="1">#国产剧安利大赛</option>
+            <option value="2">#春节返乡见闻</option>
+        </select>
+    </div>
+
+    <table id="dataTable" class="dataTable">
+        <thead>
+        <tr>
+            <th>热门账号</th>
+            <th>爆款评论</th>
+            <th>点赞数</th>
+            <th>神评指数</th>
+            <th>回复数</th>
+            <th>相关话题</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- 数据将在这里动态插入 -->
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block js %}
+    <script>
+        const topicData = [
+            [ // 科目三舞蹈
+                {
+                    user: "舞力全开✨",
+                    comment: "建议纳入驾照考试科目四！💃已经跳废三双鞋了#人类肢体新突破",
+                    likes: 2458000,
+                    heat: 9.8,
+                    reply: 12457,
+                    hashtags: "#脚踝终结者 #社会摇正统在广西"
+                },
+                {
+                    user: "舞蹈教练阿杰",
+                    comment: "动作分解来咯👏🏻 0.5倍速跟练版→点左下角一起挑战",
+                    likes: 892456,
+                    heat: 9.5,
+                    reply: 8921,
+                    hashtags: "#舞蹈教学"
+                },
+                {
+                    user: "搞笑一哥",
+                    comment: "海底捞员工年度KPI达成率300%😂😂#奇怪的本领增加了",
+                    likes: 1672000,
+                    heat: 9.7,
+                    reply: 23456,
+                    hashtags: "#这班非上不可吗"
+                }
+            ],
+            [ // 国产剧安利
+                {
+                    user: "追剧喵",
+                    comment: "年少不知许沁香！宋焰消防站play我可以！🚒#成年人该看的剧情",
+                    likes: 892345,
+                    heat: 9.6,
+                    reply: 15632,
+                    hashtags: "#反向安利 #电子榨菜"
+                },
+                {
+                    user: "考古专家",
+                    comment: "谁还没看过2018年的《镇魂》！白宇封神名场面指路→21集38分",
+                    likes: 456789,
+                    heat: 9.4,
+                    reply: 8920,
+                    hashtags: "#时代的眼泪"
+                },
+                {
+                    user: "剪刀手bot",
+                    comment: "五分钟看完《长相思》名场面混剪，三连抽送会员👉",
+                    likes: 324567,
+                    heat: 9.2,
+                    reply: 7563,
+                    hashtags: "#百万剪辑师"
+                }
+            ],
+            [ // 春节见闻
+                {
+                    user: "乡村观察",
+                    comment: "北方年夜饭vs南方年夜饭，你家餐桌C位是____？🥟#南北差异",
+                    likes: 1234000,
+                    heat: 9.7,
+                    reply: 28765,
+                    hashtags: "#年味仪式感"
+                },
+                {
+                    user: "相亲纪实",
+                    comment: "初四相了三个：1号体制内但秃头，2号帅但没房，3号妈宝男...",
+                    likes: 987654,
+                    heat: 9.8,
+                    reply: 35678,
+                    hashtags: "#婚恋市场调研"
+                },
+                {
+                    user: "返程后备箱",
+                    comment: "我妈把整个菜地装进了我的宝马，不像是回家像进了货😂#爱的重量",
+                    likes: 1568000,
+                    heat: 9.9,
+                    reply: 43215,
+                    hashtags: "#父母的爱震耳欲聋"
+                }
+            ]
+        ];
+
+        function renderTable(data) {
+            const tbody = document.querySelector("#dataTable tbody");
+            tbody.innerHTML = "";
+
+            data.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.user}</td>
+                    <td>${item.comment}</td>
+                    <td>${formatCount(item.likes)}</td>
+                    <td>${item.heat}/10</td>
+                    <td>${formatCount(item.reply)}</td>
+                    <td>${item.hashtags}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function formatCount(num) {
+            if(num >= 10000) return (num/10000).toFixed(1) + "w";
+            if(num >= 1000) return (num/1000).toFixed(1) + "k";
+            return num;
+        }
+
+        function switchTopicData() {
+            const select = document.getElementById("topicSelect");
+            renderTable(topicData[select.value]);
+        }
+
+        // 初始化显示第一个话题数据
+        renderTable(topicData[0]);
+    </script>
+{% endblock %}

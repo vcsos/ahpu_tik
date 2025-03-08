@@ -1,0 +1,161 @@
+{% extends 'layout.html' %}
+{% load static %}
+{#-----------------------舆情数据统计----------------------------#}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/hot_in.css' %}">
+    <style>
+        .dataTable tr:hover {
+            background-color: #dee2e6;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>热门视频评论数据</h1>
+    <div style="margin: 20px 0; display: flex; align-items: center;">
+        <label for="hotspotSelect">选择热搜话题：</label>
+        <select id="hotspotSelect" onchange="switchHotspotData()">
+            <option value="0">科目三舞蹈挑战</option>
+            <option value="1">尔滨的讨好型市格</option>
+            <option value="2">繁花爷叔同款美食</option>
+        </select>
+    </div>
+
+    <table id="dataTable" class="dataTable">
+        <thead>
+        <tr>
+            <th>用户昵称</th>
+            <th>评论内容</th>
+            <th>点赞数</th>
+            <th>发布时间</th>
+            <th>IP属地</th>
+            <th>情感分类</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- 数据将在这里动态插入 -->
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block js %}
+    <script>
+        // 抖音风格热搜评论数据
+        const hotspotData = [
+            [ // 科目三舞蹈挑战
+                {
+                    user: "舞林萌主✨",
+                    comment: "跳了三天终于会了！家人们觉得我能去海底捞上班了吗💃",
+                    likes: 12.3,
+                    time: "2小时前",
+                    location: "浙江",
+                    emotion: "积极"
+                },
+                {
+                    user: "街舞老炮儿",
+                    comment: "这届网友的腰是真抗造啊，建议配上护腰神器#舞蹈防护",
+                    likes: 8.9,
+                    time: "5小时前",
+                    location: "广东",
+                    emotion: "积极"
+                },
+                {
+                    user: "爱吃的娜娜",
+                    comment: "在火锅店看到服务员小哥哥跳这个，差点把毛肚笑锅里了😂",
+                    likes: 25.6,
+                    time: "1天前",
+                    location: "四川",
+                    emotion: "积极"
+                }
+            ],
+            [ // 尔滨的讨好型市格
+                {
+                    user: "东北观察员",
+                    comment: "哈尔滨这波操作我给满分！冻梨摆盘、人造月亮，尔滨你还有多少惊喜是朕不知道的❄️",
+                    likes: 34.2,
+                    time: "3小时前",
+                    location: "黑龙江",
+                    emotion: "积极"
+                },
+                {
+                    user: "南方小土豆🍠",
+                    comment: "第一次见到舔栏杆体验区，本地人：我们以前也没这待遇啊！",
+                    likes: 18.9,
+                    time: "8小时前",
+                    location: "广西",
+                    emotion: "积极"
+                },
+                {
+                    user: "旅游攻略君",
+                    comment: "建议全国文旅都按这个标准卷起来！#尔滨旅游攻略",
+                    likes: 29.1,
+                    time: "6小时前",
+                    location: "北京",
+                    emotion: "积极"
+                }
+            ],
+            [ // 繁花爷叔同款美食
+                {
+                    user: "美食考古学家",
+                    comment: "打卡排骨年糕！王家卫镜头下的上海味道确实嗲～",
+                    likes: 15.7,
+                    time: "4小时前",
+                    location: "上海",
+                    emotion: "积极"
+                },
+                {
+                    user: "剧综情报站",
+                    comment: "求问黄河路哪家最正宗？在线等，急！#繁花美食地图",
+                    likes: 22.4,
+                    time: "1天前",
+                    location: "江苏",
+                    emotion: "积极"
+                },
+                {
+                    user: "90年代回忆",
+                    comment: "看到和平饭店的蝴蝶酥，想起小时候跟姆妈排队买的场景了😭",
+                    likes: 9.8,
+                    time: "12小时前",
+                    location: "浙江",
+                    emotion: "积极"
+                }
+            ]
+        ];
+
+
+        function renderTable(data) {
+            const tbody = document.querySelector("#dataTable tbody");
+            tbody.innerHTML = "";
+
+            data.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.user}</td>
+                    <td>${item.comment}</td>
+                    <td>${formatLikes(item.likes)}</td>
+                    <td>${item.time}</td>
+                    <td>${item.location}</td>
+                    <td>${item.emotion}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 抖音特色数据格式化
+        function formatLikes(likes) {
+            return likes >= 1 ? `${likes.toFixed(1)}w` : `${(likes * 1000).toFixed(0)}`;
+        }
+
+        function formatNumber(num) {
+            return num >= 10000 ? `${(num / 10000).toFixed(1)}w` : num;
+        }
+
+        function switchHotspotData() {
+            const select = document.getElementById("hotspotSelect");
+            renderTable(hotspotData[select.value]);
+        }
+
+        // 初始化显示第一个热搜数据
+        renderTable(hotspotData[0]);
+    </script>
+{% endblock %}

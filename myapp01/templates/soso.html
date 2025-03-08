@@ -1,0 +1,265 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        /* 双列布局 */
+        .row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .row .chart-container {
+            flex: 1;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>热搜舆情分析</h1>
+    <div>
+        <div style="margin: 20px 0; display: flex; align-items: center;">
+            <label for="videoSelect">选择热搜话题：</label>
+            <select id="videoSelect" onchange="switchVideoData()">
+                <option value="0">#科目三舞蹈挑战</option>
+                <option value="1">#国产剧安利大赛</option>
+                <option value="2">#春节返乡见闻</option>
+            </select>
+        </div>
+
+        <!-- 热度趋势折线图和热词 Top 10 柱状图 -->
+        <div class="row">
+            <div class="chart-container">
+                <div class="chart-icons">
+                    <img src="https://img.icons8.com/ios/50/000000/download--v1.png" onclick="downloadChart(trendChart)" alt="下载">
+                    <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" onclick="refreshChart(trendChart)" alt="刷新">
+                </div>
+                <div id="trendChart" style="width: 100%; height: 400px;"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-icons">
+                    <img src="https://img.icons8.com/ios/50/000000/download--v1.png" onclick="downloadChart(barChart)" alt="下载">
+                    <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" onclick="refreshChart(barChart)" alt="刷新">
+                </div>
+                <div id="barChart" style="width: 100%; height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 热力图 -->
+        <div class="chart-container">
+            <div class="chart-icons">
+                <img src="https://img.icons8.com/ios/50/000000/download--v1.png" onclick="downloadChart(heatmapChart)" alt="下载">
+                <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" onclick="refreshChart(heatmapChart)" alt="刷新">
+            </div>
+            <div id="heatmapChart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+        <!-- 情感分析饼图 -->
+        <div class="chart-container">
+            <div class="chart-icons">
+                <img src="https://img.icons8.com/ios/50/000000/download--v1.png" onclick="downloadChart(pieChart)" alt="下载">
+                <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" onclick="refreshChart(pieChart)" alt="刷新">
+            </div>
+            <div id="pieChart" style="width: 100%; height: 400px;"></div>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        // 初始化图表
+        const trendChart = echarts.init(document.getElementById('trendChart'));
+        const barChart = echarts.init(document.getElementById('barChart'));
+        const heatmapChart = echarts.init(document.getElementById('heatmapChart'));
+        const pieChart = echarts.init(document.getElementById('pieChart'));
+
+        // 模拟数据
+        const videoData = [
+            { // 科目三舞蹈挑战
+                trend: createTrendData(['2023-10-01', '2023-10-02', '2023-10-03', '2023-10-04', '2023-10-05'], [100, 300, 800, 1200, 1500]),
+                bar: createBarData(['舞蹈', '挑战', '科目三', '搞笑', '视频', '热门', '娱乐', '抖音', '网红', '模仿'], [1500, 1200, 1000, 900, 800, 700, 600, 500, 400, 300]),
+                heatmap: createHeatmapData(),
+                pie: createPieData({ positive: 60, negative: 20, neutral: 20 }),
+            },
+            { // 国产剧安利大赛
+                trend: createTrendData(['2023-10-01', '2023-10-02', '2023-10-03', '2023-10-04', '2023-10-05'], [200, 500, 900, 1100, 1300]),
+                bar: createBarData(['国产剧', '安利', '大赛', '推荐', '剧情', '演员', '热门', '追剧', '口碑', '评分'], [1300, 1100, 900, 800, 700, 600, 500, 400, 300, 200]),
+                heatmap: createHeatmapData(),
+                pie: createPieData({ positive: 50, negative: 30, neutral: 20 }),
+            },
+            { // 春节返乡见闻
+                trend: createTrendData(['2023-10-01', '2023-10-02', '2023-10-03', '2023-10-04', '2023-10-05'], [300, 600, 1000, 1400, 1800]),
+                bar: createBarData(['春节', '返乡', '见闻', '家乡', '过年', '春运', '习俗', '家庭', '团聚', '旅行'], [1800, 1400, 1000, 900, 800, 700, 600, 500, 400, 300]),
+                heatmap: createHeatmapData(),
+                pie: createPieData({ positive: 70, negative: 10, neutral: 20 }),
+            }
+        ];
+
+        // 创建热度趋势数据
+        function createTrendData(dates, values) {
+            return {
+                title: { text: '热度趋势', left: 'center' },
+                xAxis: {
+                    type: 'category',
+                    data: dates
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    data: values,
+                    type: 'line',
+                    smooth: true,
+                    lineStyle: { width: 3 },
+                    itemStyle: { color: '#67E0E3' }
+                }]
+            };
+        }
+
+        // 创建热词 Top 10 数据（横向柱状图）
+        function createBarData(categories, values) {
+            return {
+                title: { text: '热词 Top 10', left: 'center' },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                xAxis: {
+                    type: 'value'
+                },
+                yAxis: {
+                    type: 'category',
+                    data: categories
+                },
+                series: [{
+                    data: values,
+                    type: 'bar',
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                            { offset: 0, color: '#83bff6' },
+                            { offset: 1, color: '#007BFF' }
+                        ])
+                    }
+                }]
+            };
+        }
+
+        // 创建热力图数据
+        function createHeatmapData() {
+            return {
+                title: { text: '舆情热度分布', left: 'center' },
+                tooltip: {
+                    position: 'top'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['00:00', '06:00', '12:00', '18:00', '24:00']
+                },
+                yAxis: {
+                    type: 'category',
+                    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+                },
+                visualMap: {
+                    min: 0,
+                    max: 10,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: '10%'
+                },
+                series: [{
+                    type: 'heatmap',
+                    data: generateHeatmapData(),
+                    label: {
+                        show: false
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+        }
+
+        // 生成热力图数据
+        function generateHeatmapData() {
+            const data = [];
+            for (let i = 0; i < 7; i++) {
+                for (let j = 0; j < 5; j++) {
+                    data.push([j, i, Math.floor(Math.random() * 10)]);
+                }
+            }
+            return data;
+        }
+
+        // 创建情感分析饼图数据
+        function createPieData(sentiment) {
+            return {
+                title: { text: '热搜情感分析', left: 'center' },
+                tooltip: {
+                    trigger: 'item'
+                },
+                series: [{
+                    type: 'pie',
+                    data: [
+                        { value: sentiment.positive, name: '积极' },
+                        { value: sentiment.negative, name: '消极' },
+                        { value: sentiment.neutral, name: '中性' }
+                    ],
+                    radius: '50%',
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            };
+        }
+
+        // 切换视频数据
+        function switchVideoData() {
+            const selected = document.getElementById('videoSelect').value;
+            const data = videoData[selected];
+
+            trendChart.setOption(data.trend);
+            barChart.setOption(data.bar);
+            heatmapChart.setOption(data.heatmap);
+            pieChart.setOption(data.pie);
+            document.getElementById('conclusion').innerText = data.conclusion;
+        }
+
+        // 下载图表
+        function downloadChart(chart) {
+            const a = document.createElement('a');
+            a.href = chart.getDataURL({ type: 'png', pixelRatio: 2 });
+            a.download = 'chart.png';
+            a.click();
+        }
+
+        // 刷新图表
+        function refreshChart(chart) {
+            chart.resize();
+        }
+
+        // 初始化显示
+        window.addEventListener('DOMContentLoaded', () => {
+            switchVideoData();
+            window.addEventListener('resize', () => {
+                trendChart.resize();
+                barChart.resize();
+                heatmapChart.resize();
+                pieChart.resize();
+            });
+        });
+    </script>
+{% endblock %}

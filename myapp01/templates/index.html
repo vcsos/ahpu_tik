@@ -1,0 +1,253 @@
+{% extends 'layout.html' %}
+
+{% block css %}
+    <style>
+        /* 表格样式优化 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .data-table th {
+            background-color: #fafafa;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .data-table .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .data-table .status.normal {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .data-table .status.hot {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        /* 图表容器样式 */
+        .chart-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- 数据总览 -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-thumbs-up fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">1.2M</h3>
+                        <small class="text-muted">最高点赞数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 收藏数 -->
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-star fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">5.9M</h3>
+                        <small class="text-muted">最高收藏数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 评论数 -->
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-commenting-o fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">6.9M</h3>
+                        <small class="text-muted">最高评论数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 分享数 -->
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-mail-forward fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">9.9M</h3>
+                        <small class="text-muted">最高分享数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 图表区域 -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="mb-4" style="text-align: center">点赞趋势分析</h5>
+                <div id="likeChart" style="height: 400px;"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="mb-4" style="text-align: center">热词频率分析</h5>
+                <div id="wordFrequencyChart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="chart-container mt-4">
+        <h5 class="mb-4" style="text-align: center">最新舆情数据</h5>
+        <table class="table data-table">
+            <thead>
+            <tr>
+                <th>日期</th>
+                <th>视频ID</th>
+                <th>用户昵称</th>
+                <th>互动量</th>
+                <th>状态</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>2025-02-03</td>
+                <td>6789012345</td>
+                <td>抖音达人小明</td>
+                <td>12,345</td>
+                <td><span class="status normal">正常</span></td>
+            </tr>
+            <tr>
+                <td>2025-02-02</td>
+                <td>6789012346</td>
+                <td>用户小红</td>
+                <td>8,976</td>
+                <td><span class="status normal">正常</span></td>
+            </tr>
+            <tr>
+                <td>2025-02-01</td>
+                <td>6789012347</td>
+                <td>搞笑博主老王</td>
+                <td>23,456</td>
+                <td><span class="status hot">热门</span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        // 初始化点赞趋势折线图
+        function initLikeChart() {
+            const chart = echarts.init(document.getElementById('likeChart'));
+            const option = {
+                tooltip: {trigger: 'axis'},
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月']
+                },
+                yAxis: {type: 'value'},
+                series: [{
+                    data: [820, 932, 901, 934, 1290, 1330, 1320],
+                    type: 'line',
+                    smooth: true,
+                    color: '#36a2eb',
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: 'rgba(54, 162, 235, 0.6)'},
+                            {offset: 1, color: 'rgba(54, 162, 235, 0)'}
+                        ])
+                    }
+                }]
+            };
+            chart.setOption(option);
+        }
+
+        // 初始化热词频率饼图
+        function initWordFrequencyChart() {
+            const chart = echarts.init(document.getElementById('wordFrequencyChart'));
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c}次 ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    right: 10,
+                    top: 'middle'
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['35%', '50%'],
+                    label: {
+                        show: true,
+                        formatter: '{b}: {c}次'
+                    },
+                    data: [
+                        {value: 2350, name: '元宇宙'},
+                        {value: 1890, name: '冬奥会'},
+                        {value: 1560, name: '短视频'},
+                        {value: 1280, name: '直播带货'},
+                        {value: 980, name: '春节晚会'}
+                    ],
+                    itemStyle: {
+                        borderRadius: 6,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    emphasis: {
+                        label: {show: true}
+                    }
+                }]
+            };
+            chart.setOption(option);
+        }
+
+        // 页面加载完成后初始化图表
+        window.onload = function () {
+            initLikeChart();
+            initWordFrequencyChart();
+            // 窗口大小变化时自动调整图表
+            window.addEventListener('resize', () => {
+                echarts.init(document.getElementById('likeChart')).resize();
+                echarts.init(document.getElementById('wordFrequencyChart')).resize();
+            });
+        };
+    </script>
+{% endblock %}
