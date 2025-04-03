@@ -1,5 +1,5 @@
 {% extends 'layout.html' %}
-
+{% load humanize %}
 {% block css %}
     <style>
         /* 表格样式优化 */
@@ -49,13 +49,37 @@
             padding: 24px;
             margin-bottom: 24px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: 480px; /* 固定高度 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container > div {
+            flex: 1;
+            min-height: 400px;
+        }
+
+        /* 统一标题样式 */
+        .chart-title {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: auto;
+                padding: 15px;
+            }
         }
     </style>
 {% endblock %}
 
 {% block content %}
     <!-- 数据总览 -->
-    <div class="row g-4 mb-4">
+<div class="row g-4 mb-4">
         <div class="col-md-3">
             <div class="data-card">
                 <div class="d-flex align-items-center">
@@ -63,13 +87,12 @@
                         <i class="fa fa-thumbs-up fa-2x"></i>
                     </div>
                     <div>
-                        <h3 class="mb-0">1.2M</h3>
-                        <small class="text-muted">最高点赞数</small>
+                        <h3 class="mb-0">{{ max_like_count|intcomma }}</h3>
+                        <small class="text-muted">最高评论点赞数</small>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- 收藏数 -->
         <div class="col-md-3">
             <div class="data-card">
                 <div class="d-flex align-items-center">
@@ -77,35 +100,33 @@
                         <i class="fa fa-star fa-2x"></i>
                     </div>
                     <div>
-                        <h3 class="mb-0">5.9M</h3>
+                        <h3 class="mb-0">{{ max_collects|intcomma }}</h3>
                         <small class="text-muted">最高收藏数</small>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- 评论数 -->
         <div class="col-md-3">
             <div class="data-card">
                 <div class="d-flex align-items-center">
                     <div class="bg-primary text-white rounded-circle p-3 me-3">
-                        <i class="fa fa-commenting-o fa-2x"></i>
+                        <i class="fa fa-fire fa-2x"></i>
                     </div>
                     <div>
-                        <h3 class="mb-0">6.9M</h3>
-                        <small class="text-muted">最高评论数</small>
+                        <h3 class="mb-0">{{ max_hot_value|intcomma }}</h3>
+                        <small class="text-muted">最高热度值</small>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- 分享数 -->
         <div class="col-md-3">
             <div class="data-card">
                 <div class="d-flex align-items-center">
                     <div class="bg-primary text-white rounded-circle p-3 me-3">
-                        <i class="fa fa-mail-forward fa-2x"></i>
+                        <i class="fa fa-share-alt fa-2x"></i>
                     </div>
                     <div>
-                        <h3 class="mb-0">9.9M</h3>
+                        <h3 class="mb-0">{{ max_shares|intcomma }}</h3>
                         <small class="text-muted">最高分享数</small>
                     </div>
                 </div>
@@ -113,141 +134,184 @@
         </div>
     </div>
 
-
     <!-- 图表区域 -->
     <div class="row g-4">
         <div class="col-md-6">
             <div class="chart-container">
-                <h5 class="mb-4" style="text-align: center">点赞趋势分析</h5>
-                <div id="likeChart" style="height: 400px;"></div>
+                <h5 class="chart-title">📊 热搜热度排行</h5>
+                <div id="hotBoardChart"></div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="chart-container">
-                <h5 class="mb-4" style="text-align: center">热词频率分析</h5>
-                <div id="wordFrequencyChart" style="height: 400px;"></div>
+                <h5 class="chart-title">🔥 热榜TOP3</h5>
+                <div id="top3Chart"></div>
             </div>
         </div>
     </div>
 
     <!-- 数据表格 -->
     <div class="chart-container mt-4">
-        <h5 class="mb-4" style="text-align: center">最新舆情数据</h5>
-        <table class="table data-table">
+        <h5 class="chart-title">📋 最新舆情数据</h5>
+<table class="table data-table">
             <thead>
-            <tr>
-                <th>日期</th>
-                <th>视频ID</th>
-                <th>用户昵称</th>
-                <th>互动量</th>
-                <th>状态</th>
-            </tr>
+                <tr>
+                    <th>视频ID</th>
+                    <th>文案</th>
+                    <th>用户昵称</th>
+                    <th>收藏</th>
+                    <th>分享</th>
+                    <th>状态</th>
+                </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>2025-02-03</td>
-                <td>6789012345</td>
-                <td>抖音达人小明</td>
-                <td>12,345</td>
-                <td><span class="status normal">正常</span></td>
-            </tr>
-            <tr>
-                <td>2025-02-02</td>
-                <td>6789012346</td>
-                <td>用户小红</td>
-                <td>8,976</td>
-                <td><span class="status normal">正常</span></td>
-            </tr>
-            <tr>
-                <td>2025-02-01</td>
-                <td>6789012347</td>
-                <td>搞笑博主老王</td>
-                <td>23,456</td>
-                <td><span class="status hot">热门</span></td>
-            </tr>
+                {% for video in latest_videos %}
+                <tr>
+                    <td>{{ video.video_id|truncatechars:15 }}</td>
+                    <td>{{ video.caption|truncatechars:30 }}</td>
+                    <td>{{ video.user }}</td>
+                    <td>{{ video.collects|intcomma }}</td>
+                    <td>{{ video.shares|intcomma }}</td>
+                    <td>
+                        <span class="status {% if video.popularity == '热门' %}hot{% else %}normal{% endif %}">
+                            {{ video.popularity }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
 {% endblock %}
 
 {% block js %}
-    <script>
-        // 初始化点赞趋势折线图
-        function initLikeChart() {
-            const chart = echarts.init(document.getElementById('likeChart'));
-            const option = {
-                tooltip: {trigger: 'axis'},
-                xAxis: {
-                    type: 'category',
-                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月']
-                },
-                yAxis: {type: 'value'},
-                series: [{
-                    data: [820, 932, 901, 934, 1290, 1330, 1320],
-                    type: 'line',
-                    smooth: true,
-                    color: '#36a2eb',
-                    areaStyle: {
-                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            {offset: 0, color: 'rgba(54, 162, 235, 0.6)'},
-                            {offset: 1, color: 'rgba(54, 162, 235, 0)'}
-                        ])
-                    }
-                }]
-            };
-            chart.setOption(option);
-        }
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+<script>
+    // 统一配置参数
+    const commonGrid = {
+        top: 80,
+        bottom: 40,
+        left: '10%',
+        right: '10%',
+        containLabel: true
+    };
 
-        // 初始化热词频率饼图
-        function initWordFrequencyChart() {
-            const chart = echarts.init(document.getElementById('wordFrequencyChart'));
-            const option = {
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{b}: {c}次 ({d}%)'
-                },
-                legend: {
-                    orient: 'vertical',
-                    right: 10,
-                    top: 'middle'
-                },
-                series: [{
-                    type: 'pie',
-                    radius: ['40%', '70%'],
-                    center: ['35%', '50%'],
-                    label: {
-                        show: true,
-                        formatter: '{b}: {c}次'
-                    },
-                    data: [
-                        {value: 2350, name: '元宇宙'},
-                        {value: 1890, name: '冬奥会'},
-                        {value: 1560, name: '短视频'},
-                        {value: 1280, name: '直播带货'},
-                        {value: 980, name: '春节晚会'}
-                    ],
-                    itemStyle: {
-                        borderRadius: 6,
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-                    emphasis: {
-                        label: {show: true}
-                    }
-                }]
-            };
-            chart.setOption(option);
-        }
+    // 热搜热度排行
+    function initHotBoardChart() {
+        const chart = echarts.init(document.getElementById('hotBoardChart'));
+        const hotData = {{ hotboards_json|safe }};
 
-        // 页面加载完成后初始化图表
-        window.onload = function () {
-            initLikeChart();
-            initWordFrequencyChart();
-            // 窗口大小变化时自动调整图表
-            window.addEventListener('resize', () => {
-                echarts.init(document.getElementById('likeChart')).resize();
-                echarts.init(document.getElementById('wordFrequencyChart')).resize();
-            });
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                formatter: '{b}: {c} 热度值'
+            },
+            grid: commonGrid,
+            xAxis: {
+                type: 'category',
+                data: hotData.map(item => item.keyword),
+                axisLabel: {
+                    rotate: 45,
+                    interval: 0,
+                    hideOverlap: true
+                },
+                axisLine: { show: false },
+                axisTick: { show: false }
+            },
+            yAxis: {
+                type: 'value',
+                name: '热度值',
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#666',
+                        width: 1
+                    }
+                }
+            },
+            series: [{
+                data: hotData.map(item => item.hot_value),
+                type: 'bar',
+                barWidth: '60%',
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        {offset: 0, color: '#36a2eb'},
+                        {offset: 1, color: '#9acfea'}
+                    ])
+                }
+            }]
         };
-    </script>
+        chart.setOption(option);
+        return chart;
+    }
+
+    // 热榜TOP3
+    function initTop3Chart() {
+        const chart = echarts.init(document.getElementById('top3Chart'));
+        const hotData = {{ hotboards_json|safe }};
+
+        const top3Data = hotData
+            .sort((a, b) => b.hot_value - a.hot_value)
+            .slice(0, 3);
+
+        const option = {
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c} 热度值'
+            },
+            grid: commonGrid,
+            xAxis: { show: false },
+            yAxis: {
+                type: 'category',
+                data: top3Data.map(item => item.keyword),
+                inverse: true,
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#666',
+                        width: 1
+                    }
+                }
+            },
+            series: [{
+                type: 'bar',
+                data: top3Data.map(item => item.hot_value),
+                barWidth: 20,
+                itemStyle: {
+                    color: ({ dataIndex }) => [
+                        '#ff6b6b', '#fbc531', '#2ecc71'
+                    ][dataIndex],
+                    borderRadius: [10, 10, 0, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'right',
+                    formatter: ({ dataIndex }) => [
+                        '🥇 ', '🥈 ', '🥉 '
+                    ][dataIndex],
+                    fontSize: 24
+                }
+            }]
+        };
+        chart.setOption(option);
+        return chart;
+    }
+
+    // 初始化图表
+    let hotChart, top3Chart;
+    window.addEventListener('load', () => {
+        hotChart = initHotBoardChart();
+        top3Chart = initTop3Chart();
+    });
+
+    // 优化响应式
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            hotChart?.resize();
+            top3Chart?.resize();
+        }, 200);
+    });
+</script>
 {% endblock %}

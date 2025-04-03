@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 
 from myapp01 import views
+from myapp01.views import get_cluster_data, sentiment_analysis
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,10 +28,13 @@ urlpatterns = [
     path('layout/', views.layout),  # 模板（母版）
     path('information/', views.information),  # 舆情数据页面
     path('index/hot', views.hotlist),  # 热搜榜单
-    path('index/hotdir/', views.hotdir),  # 热词
-    path('index/view', views.view),  # 热搜分析
     path('index/saying', views.saying),  # 评论分析
     path('index/ip', views.ip),  # ip分析
     path('index/soso', views.soso),  # 舆情分析
-
+    path('api/hot_boards/', views.HotBoardListView.as_view(), name='hot_boards'),  # 热搜api
+    path('api/comments/', views.get_comments, name='comments'),    #评论api
+    path('api/region_distribution/', views.get_region_distribution),    #地区api
+    path('hot_data_analysis/', views.hot_data_analysis, name='hot_data_analysis'),
+    path('api/cluster-data/', get_cluster_data, name='cluster_data'),
+    path('api/sentiment-analysis/', sentiment_analysis, name='sentiment_analysis'),
 ]

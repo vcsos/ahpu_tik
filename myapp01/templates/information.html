@@ -1,161 +1,259 @@
 {% extends 'layout.html' %}
 {% load static %}
-{#-----------------------舆情数据统计----------------------------#}
+
 {% block css %}
-    <link rel="stylesheet" href="{% static 'css/hot_in.css' %}">
-    <style>
-        .dataTable tr:hover {
-            background-color: #dee2e6;
-        }
-    </style>
+<link rel="stylesheet" href="{% static 'css/hot_in.css' %}">
+<style>
+    .dataTable th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .dataTable tr:hover td {
+        background-color: #f1f3f5 !important;
+    }
+    #loading {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin: 20px 0;
+    }
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #e9ecef;
+        border-top-color: #1971c2;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    #hotspotSelect {
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+    }
+    #hotspotSelect:focus {
+        border-color: #4dabf7;
+        box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.25);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-    <h1>热门视频评论数据</h1>
-    <div style="margin: 20px 0; display: flex; align-items: center;">
-        <label for="hotspotSelect">选择热搜话题：</label>
-        <select id="hotspotSelect" onchange="switchHotspotData()">
-            <option value="0">科目三舞蹈挑战</option>
-            <option value="1">尔滨的讨好型市格</option>
-            <option value="2">繁花爷叔同款美食</option>
-        </select>
+<div class="container-fluid py-4">
+    <h3 class="mb-4" style="text-align: center">热门视频评论分析</h3>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center gap-3">
+                <label for="hotspotSelect" class="form-label mb-0">选择分析目标：</label>
+                <select id="hotspotSelect" class="form-select">
+                    <option value="">加载热搜数据中...</option>
+                </select>
+            </div>
+        </div>
     </div>
 
-    <table id="dataTable" class="dataTable">
-        <thead>
-        <tr>
-            <th>用户昵称</th>
-            <th>评论内容</th>
-            <th>点赞数</th>
-            <th>发布时间</th>
-            <th>IP属地</th>
-            <th>情感分类</th>
-        </tr>
-        </thead>
-        <tbody>
-        <!-- 数据将在这里动态插入 -->
-        </tbody>
-    </table>
+    <div id="loading">
+        <div class="loading-spinner"></div>
+        <span>正在加载评论数据...</span>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <table id="dataTable" class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th width="15%">👤 用户昵称</th>
+                        <th width="40%">💬 评论内容</th>
+                        <th width="12%">❤️ 点赞数</th>
+                        <th width="18%">🕒 发布时间</th>
+                        <th width="15%">🌍 地区</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="noData">
+                        <td colspan="5" class="text-center text-muted py-4">
+                            请从上方选择需要分析的热搜话题
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block js %}
-    <script>
-        // 抖音风格热搜评论数据
-        const hotspotData = [
-            [ // 科目三舞蹈挑战
-                {
-                    user: "舞林萌主✨",
-                    comment: "跳了三天终于会了！家人们觉得我能去海底捞上班了吗💃",
-                    likes: 12.3,
-                    time: "2小时前",
-                    location: "浙江",
-                    emotion: "积极"
-                },
-                {
-                    user: "街舞老炮儿",
-                    comment: "这届网友的腰是真抗造啊，建议配上护腰神器#舞蹈防护",
-                    likes: 8.9,
-                    time: "5小时前",
-                    location: "广东",
-                    emotion: "积极"
-                },
-                {
-                    user: "爱吃的娜娜",
-                    comment: "在火锅店看到服务员小哥哥跳这个，差点把毛肚笑锅里了😂",
-                    likes: 25.6,
-                    time: "1天前",
-                    location: "四川",
-                    emotion: "积极"
-                }
-            ],
-            [ // 尔滨的讨好型市格
-                {
-                    user: "东北观察员",
-                    comment: "哈尔滨这波操作我给满分！冻梨摆盘、人造月亮，尔滨你还有多少惊喜是朕不知道的❄️",
-                    likes: 34.2,
-                    time: "3小时前",
-                    location: "黑龙江",
-                    emotion: "积极"
-                },
-                {
-                    user: "南方小土豆🍠",
-                    comment: "第一次见到舔栏杆体验区，本地人：我们以前也没这待遇啊！",
-                    likes: 18.9,
-                    time: "8小时前",
-                    location: "广西",
-                    emotion: "积极"
-                },
-                {
-                    user: "旅游攻略君",
-                    comment: "建议全国文旅都按这个标准卷起来！#尔滨旅游攻略",
-                    likes: 29.1,
-                    time: "6小时前",
-                    location: "北京",
-                    emotion: "积极"
-                }
-            ],
-            [ // 繁花爷叔同款美食
-                {
-                    user: "美食考古学家",
-                    comment: "打卡排骨年糕！王家卫镜头下的上海味道确实嗲～",
-                    likes: 15.7,
-                    time: "4小时前",
-                    location: "上海",
-                    emotion: "积极"
-                },
-                {
-                    user: "剧综情报站",
-                    comment: "求问黄河路哪家最正宗？在线等，急！#繁花美食地图",
-                    likes: 22.4,
-                    time: "1天前",
-                    location: "江苏",
-                    emotion: "积极"
-                },
-                {
-                    user: "90年代回忆",
-                    comment: "看到和平饭店的蝴蝶酥，想起小时候跟姆妈排队买的场景了😭",
-                    likes: 9.8,
-                    time: "12小时前",
-                    location: "浙江",
-                    emotion: "积极"
-                }
-            ]
-        ];
+<script>
+    // 初始化加载热搜列表
+    document.addEventListener('DOMContentLoaded', async () => {
+        const select = document.getElementById('hotspotSelect');
+        const loading = document.getElementById('loading');
 
+        const showLoading = (show) => {
+            if (loading) loading.style.display = show ? 'flex' : 'none';
+        };
 
-        function renderTable(data) {
-            const tbody = document.querySelector("#dataTable tbody");
-            tbody.innerHTML = "";
+        try {
+            showLoading(true);
 
-            data.forEach(item => {
-                const row = document.createElement("tr");
+            // 获取热搜数据
+            const response = await fetch('/api/hot_boards/');
+            if (!response.ok) throw new Error(`HTTP错误! 状态码: ${response.status}`);
+
+            const hotBoards = await response.json();
+
+            // 渲染下拉选项
+            select.innerHTML = hotBoards.map(board =>
+                `<option value="${board.id}">${board.title}</option>`
+            ).join('');
+
+            // 添加事件监听
+            select.addEventListener('change', () => {
+                if (select.value) loadComments(select.value);
+            });
+
+            // 默认加载第一条
+            if (hotBoards.length > 0) {
+                select.value = hotBoards[0].id;
+                loadComments(hotBoards[0].id);
+            }
+        } catch (error) {
+            console.error('初始化失败:', error);
+            select.innerHTML = `<option value="">数据加载失败 - ${error.message}</option>`;
+        } finally {
+            showLoading(false);
+        }
+    });
+
+    // 加载评论数据
+    async function loadComments(hotId) {
+        const tbody = document.querySelector("#dataTable tbody");
+        const loading = document.getElementById('loading');
+        const noDataRow = document.getElementById('noData');
+
+        const clearTable = () => {
+            tbody.innerHTML = '';
+            if (noDataRow) noDataRow.style.display = 'none';
+        };
+
+        const showError = (message) => {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-danger py-3">
+                        ⚠️ ${message}
+                    </td>
+                </tr>
+            `;
+        };
+
+        try {
+            // 参数验证
+            if (!hotId || isNaN(hotId)) {
+                throw new Error('无效的热搜ID');
+            }
+
+            clearTable();
+            loading.style.display = 'flex';
+
+            // 发起请求
+            const response = await fetch(`/api/comments/?hotId=${encodeURIComponent(hotId)}`);
+            console.debug('API响应:', response);
+
+            if (!response.ok) {
+                throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+            }
+
+            const comments = await response.json();
+            console.debug('收到的评论数据:', comments);
+
+            // 处理空数据
+            if (!comments || comments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            🕳️ 当前话题暂无评论数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // 渲染数据
+            comments.forEach(comment => {
+                const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${item.user}</td>
-                    <td>${item.comment}</td>
-                    <td>${formatLikes(item.likes)}</td>
-                    <td>${item.time}</td>
-                    <td>${item.location}</td>
-                    <td>${item.emotion}</td>
+                    <td class="align-middle">${escapeHTML(comment.nickname) || '匿名用户'}</td>
+                    <td class="align-middle">${emojify(escapeHTML(comment.content))}</td>
+                    <td class="align-middle text-nowrap">${formatLikes(comment.likes)}</td>
+                    <td class="align-middle text-nowrap">${formatTime(comment.date)}</td>
+                    <td class="align-middle">${comment.region ? escapeHTML(comment.region) : '🌐 未知'}</td>
                 `;
                 tbody.appendChild(row);
             });
-        }
 
-        // 抖音特色数据格式化
-        function formatLikes(likes) {
-            return likes >= 1 ? `${likes.toFixed(1)}w` : `${(likes * 1000).toFixed(0)}`;
+        } catch (error) {
+            console.error('加载评论失败:', error);
+            showError(`数据加载失败: ${error.message}`);
+        } finally {
+            loading.style.display = 'none';
+            if (tbody.children.length === 0 && noDataRow) {
+                noDataRow.style.display = '';
+            }
         }
+    }
 
-        function formatNumber(num) {
-            return num >= 10000 ? `${(num / 10000).toFixed(1)}w` : num;
+    // 实用工具函数
+    function escapeHTML(str) {
+        return str?.replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;',
+            '"': '&quot;', "'": '&#39;'
+        }[m])) || '';
+    }
+
+    function emojify(text) {
+        const emojiMap = {
+            '[赞]': '👍', '[心]': '❤️', '[笑]': '😄',
+            '[鲜花]': '🌸', '[鼓掌]': '👏', '[泪]': '😢'
+        };
+        return text.replace(/\[(.*?)\]/g, (m, p1) =>
+            emojiMap[m] || p1 ? `[${p1}]` : m
+        );
+    }
+
+    function formatLikes(num) {
+        num = parseInt(num) || 0;
+        if (num >= 1e8) return `${(num/1e8).toFixed(1)}亿`;
+        if (num >= 1e4) return `${(num/1e4).toFixed(1)}万`;
+        if (num >= 1e3) return `${(num/1e3).toFixed(1)}千`;
+        return num.toLocaleString();
+    }
+
+    function formatTime(isoString) {
+        try {
+            const date = new Date(isoString);
+            if (isNaN(date)) return '时间未知';
+
+            const now = new Date();
+            const diffSec = Math.round((now - date) / 1e3);
+
+            if (diffSec < 60) return '刚刚';
+            if (diffSec < 3600) return `${Math.floor(diffSec/60)}分钟前`;
+            if (diffSec < 86400) return `${Math.floor(diffSec/3600)}小时前`;
+
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(/\//g, '-');
+        } catch {
+            return '时间未知';
         }
-
-        function switchHotspotData() {
-            const select = document.getElementById("hotspotSelect");
-            renderTable(hotspotData[select.value]);
-        }
-
-        // 初始化显示第一个热搜数据
-        renderTable(hotspotData[0]);
-    </script>
+    }
+</script>
 {% endblock %}

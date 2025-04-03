@@ -1,7 +1,7 @@
 // 登录注册界面大字浮动效果
 window.onload = function () {
     var subtitle = document.getElementById('subtitle');
-    var textToType = '欢迎使用抖音舆情分析可视化系统';
+    var textToType = '欢迎使用短视频舆情分析可视化系统';
     var index = 0;
     var typingInterval;
 

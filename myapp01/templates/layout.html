@@ -37,8 +37,7 @@
             <div class="collapse" id="collapseHotSearch">
                 <div class="nav flex-column ps-4">
                     <a class="nav-link" href="http://localhost:8000/index/hot">热搜榜单</a>
-                    <a class="nav-link" href="http://localhost:8000/index/hotdir/">评论热词数据</a>
-                    <a class="nav-link" href="http://localhost:8000/information/#">热搜数据统计</a>
+                    <a class="nav-link" href="http://localhost:8000/information">热搜数据统计</a>
                 </div>
             </div>
         </div>
@@ -51,17 +50,13 @@
             </a>
             <div class="collapse" id="collapseComponents">
                 <div class="nav flex-column ps-4">
-                    <a class="nav-link" href="http://localhost:8000/index/view">热搜分析</a>
-                    <a class="nav-link" href="http://localhost:8000/index/saying">评论分析</a>
+                    <a class="nav-link" href="http://localhost:8000/index/saying">热搜情感分析</a>
                     <a class="nav-link" href="http://localhost:8000/index/ip">IP分析</a>
                     <a class="nav-link" href="http://localhost:8000/index/soso">舆情分析</a>
                 </div>
             </div>
         </div>
 
-        <a class="nav-link active" href="#">
-            <i class="fa fa-commenting me-2"></i>热词词云图
-        </a>
     </nav>
 </div>
 
@@ -75,9 +70,9 @@
                     设置
                 </a>
                 <div class="dropdown-menu dropdown-menu-end">
-                    <a href="#" class="dropdown-item">我的资料</a>
-                    <a href="#" class="dropdown-item">关于系统</a>
-                    <a href="http://localhost:8000/register/" class="dropdown-item">退出登录</a>
+{#                    <a href="#" class="dropdown-item">我的资料</a>#}
+{#                    <a href="#" class="dropdown-item">关于系统</a>#}
+                    <a href="http://localhost:8000/login/" class="dropdown-item">退出登录</a>
                 </div>
             </div>
         </div>
@@ -96,7 +91,6 @@
 <script src="{% static 'js/echarts.min.js' %}"></script>
 <script src="{% static 'js/echarts-wordcloud.min.js' %}"></script>
 <script src="{% static 'js/china.js' %}"></script>
-<script src="{% static 'js/main.js' %}"></script>
 <script src="{% static 'js/type.js' %}"></script>
 
 {% block js %}{% endblock %}

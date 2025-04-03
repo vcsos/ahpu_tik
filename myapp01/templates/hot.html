@@ -52,11 +52,6 @@
             transition: color 0.3s;
         }
 
-        .video-count {
-            color: #666;
-            font-size: 0.9em;
-        }
-
         @media (max-width: 768px) {
             .hot-list td, .hot-list th {
                 padding: 12px;
@@ -70,34 +65,36 @@
 {% endblock %}
 
 {% block content %}
-    <h2 style="text-align: center">抖音热榜实时排行</h2>
+    <h2 style="text-align: center">抖音热搜榜单排行</h2>
+    {# 修改模板中视频数列为时间列 #}
     <table class="hot-list">
         <thead>
         <tr>
             <th style="width: 70px;">排名</th>
             <th>热搜话题</th>
             <th style="width: 100px;">热度值</th>
-            <th style="width: 120px;">视频数</th>
+            <th style="width: 180px;">上榜时间</th>
+            {# 修改列标题 #}
         </tr>
         </thead>
         <tbody>
         {% for item in hot_items %}
             <tr>
                 <td>
-                    <span class="rank {% if item.rank <= 3 %}top3{% endif %}">
-                        {{ item.rank }}
-                    </span>
+                <span class="rank {% if item.rank <= 3 %}top3{% endif %}">
+                    {{ item.rank }}
+                </span>
                 </td>
                 <td>
-                    <span class="topic-text">
-                        {{ item.keyword }}
-                    </span>
+                <span class="topic-text">
+                    {{ item.keyword }}
+                </span>
                 </td>
                 <td class="hot-value">
                     {{ item.formatted_hot }}
                 </td>
-                <td class="video-count">
-                    {{ item.formatted_videos }}
+                <td class="video-count">  {# 修改为时间显示 #}
+                    {{ item.formatted_time }}
                 </td>
             </tr>
         {% endfor %}
