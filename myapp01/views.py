@@ -2,7 +2,7 @@ import random
 from collections import defaultdict
 import pandas as pd
 from django.core.cache import cache
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 import re
 from django.http import JsonResponse
 from django.views import View
@@ -11,17 +11,11 @@ from rest_framework.response import Response
 import json
 import redis
 from django.shortcuts import render
+from Tik import settings
 from .models import HotBoard, CommentHot1, CommentHot2, CommentHot3, CommentHot4, CommentHot5, RegisterUser
 from .serializers import HotBoardSerializer
 from django.db import connection
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
-import os
-from celery import shared_task
-
-redis_conn = redis.Redis(host='localhost', port=6379, db=0)
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
+from collections import defaultdict
 
 
 # 注册页面
@@ -64,59 +58,55 @@ def login(request):
         return render(request, 'index.html')
 
 
+redis_conn = redis.Redis(host='localhost', port=6379, db=0)
+import json
+import redis
+from django.shortcuts import render
+from django.core.cache import cache
+from django.db.models import Max
+from .models import CommentHot1
+
+# Redis配置
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+
 def index(request):
     # 最高评论点赞数（从MySQL）
-    max_comment_cache_key = 'max_comment_like_count'
-    max_comment = cache.get(max_comment_cache_key)
-    if not max_comment:
-        max_comment = CommentHot1.objects.order_by('-like_count').first()
-        cache.set(max_comment_cache_key, max_comment, 3600)
+    max_comment = CommentHot1.objects.order_by('-like_count').first()
     max_like_count = max_comment.like_count if max_comment else 0
 
     # 最高收藏数（从Redis video）
-    max_collects_cache_key = 'max_collects'
-    max_collects = cache.get(max_collects_cache_key)
-    if not max_collects:
-        max_collects = 0
-        video_keys = redis_conn.keys('video:*')
-        latest_videos = []
-        for key in video_keys:
-            video_data = json.loads(redis_conn.get(key))
-            if video_data.get('collects', 0) > max_collects:
-                max_collects = video_data['collects']
-            # 收集最新舆情数据
-            if len(latest_videos) < 5:
-                latest_videos.append({
-                    'caption': video_data['caption'],
-                    'video_id': video_data['video_id'],
-                    'user': video_data['user'],
-                    'collects': video_data.get('collects'),
-                    'shares': video_data.get('shares', 0),
-                    'popularity': video_data['popularity']
-                })
-        cache.set(max_collects_cache_key, max_collects, 3600)
+    max_collects = 0
+    video_keys = redis_conn.keys('video:*')
+    latest_videos = []
+    for key in video_keys:
+        video_data = json.loads(redis_conn.get(key))
+        if video_data.get('collects', 0) > max_collects:
+            max_collects = video_data['collects']
+        # 收集最新舆情数据
+        if len(latest_videos) < 5:
+            latest_videos.append({
+                'caption': video_data['caption'],
+                'video_id': video_data['video_id'],
+                'user': video_data['user'],
+                'collects': video_data.get('collects'),
+                'shares': video_data.get('shares', 0),
+                'popularity': video_data['popularity']
+            })
 
     # 最高热度值 & 热搜数据（从Redis hotboard）
-    max_hot_value_cache_key = 'max_hot_value'
-    max_hot_value = cache.get(max_hot_value_cache_key)
+    max_hot_value = 0
     hotboards = []
-    if not max_hot_value:
-        max_hot_value = 0
-        hotboard_keys = redis_conn.keys('hotboard:*')
-        for key in hotboard_keys:
-            board_data = json.loads(redis_conn.get(key))
-            hotboards.append(board_data)
-            if board_data['hot_value'] > max_hot_value:
-                max_hot_value = board_data['hot_value']
-        cache.set(max_hot_value_cache_key, max_hot_value, 3600)
+    hotboard_keys = redis_conn.keys('hotboard:*')
+    for key in hotboard_keys:
+        board_data = json.loads(redis_conn.get(key))
+        hotboards.append(board_data)
+        if board_data['hot_value'] > max_hot_value:
+            max_hot_value = board_data['hot_value']
 
     # 最高分享数（从Redis video中找最高shares）
-    max_shares_cache_key = 'max_shares'
-    max_shares = cache.get(max_shares_cache_key)
-    if not max_shares:
-        max_shares = max([video.get('shares', 0) for video in
-                          [json.loads(redis_conn.get(k)) for k in video_keys]], default=0)
-        cache.set(max_shares_cache_key, max_shares, 3600)
+    max_shares = max([video.get('shares', 0) for video in
+                      [json.loads(redis_conn.get(k)) for k in video_keys]], default=0)
 
     current_hot_board_id = None
     if hotboards:
@@ -157,18 +147,10 @@ def soso(request):
 # --------------------------评论数据---------------------------------------
 def hotlist(request):
     # 获取按排名升序排列的热榜数据
-    hot_items_cache_key = 'hot_items'
-    hot_items = cache.get(hot_items_cache_key)
-    if not hot_items:
-        hot_items = HotBoard.objects.all().order_by('rank')
-        cache.set(hot_items_cache_key, hot_items, 3600)
+    hot_items = HotBoard.objects.all().order_by('rank')
 
     # 获取最新更新时间（取最新创建的记录时间）
-    update_time_cache_key = 'hot_update_time'
-    update_time = cache.get(update_time_cache_key)
-    if not update_time:
-        update_time = HotBoard.objects.order_by('-created_at').first().created_at if hot_items.exists() else None
-        cache.set(update_time_cache_key, update_time, 3600)
+    update_time = HotBoard.objects.order_by('-created_at').first().created_at if hot_items.exists() else None
 
     return render(request, 'hot.html', {
         'hot_items': hot_items,
@@ -179,11 +161,7 @@ def hotlist(request):
 class HotBoardListView(APIView):
     def get(self, request):
         # 按rank升序排列（1-5）
-        hot_boards_cache_key = 'hot_boards_1_5'
-        hot_boards = cache.get(hot_boards_cache_key)
-        if not hot_boards:
-            hot_boards = HotBoard.objects.filter(rank__lte=5).order_by('rank')
-            cache.set(hot_boards_cache_key, hot_boards, 3600)
+        hot_boards = HotBoard.objects.filter(rank__lte=5).order_by('rank')
         serializer = HotBoardSerializer(hot_boards, many=True)
         return Response(serializer.data)
 
@@ -212,11 +190,7 @@ def get_comments(request):
         return JsonResponse({'error': '无效的排名'}, status=400)
 
     CommentModel = comment_model_mapping[rank]
-    comments_cache_key = f'comments_{hot_id}'
-    comments = cache.get(comments_cache_key)
-    if not comments:
-        comments = CommentModel.objects.filter(hot_board=hot_board)
-        cache.set(comments_cache_key, comments, 3600)
+    comments = CommentModel.objects.filter(hot_board=hot_board)
 
     # 序列化评论数据
     data = [{
@@ -251,10 +225,8 @@ def get_region_distribution(request):
     if cached := cache.get(cache_key):
         return JsonResponse(cached)
 
-    try:
-        hot_board = HotBoard.objects.get(id=hot_search_id)
-    except HotBoard.DoesNotExist:
-        return JsonResponse({'error': '无效的热搜ID'}, status=404)
+    # 获取热搜对象
+    hot_board = get_object_or_404(HotBoard, id=hot_search_id)
 
     # 动态选择评论模型
     comment_model_mapping = {
@@ -268,35 +240,48 @@ def get_region_distribution(request):
     if not CommentModel:
         return JsonResponse({'error': '无效的排名'}, status=400)
 
-    # 统计地区数据
-    regions_cache_key = f'regions_{hot_search_id}'
-    regions = cache.get(regions_cache_key)
-    if not regions:
-        regions = CommentModel.objects.filter(hot_board_id=hot_search_id) \
-            .values_list('region', flat=True)
-        cache.set(regions_cache_key, regions, 3600)
+    # 统计地区数据并标准化名称
+    regions = CommentModel.objects.filter(hot_board_id=hot_search_id) \
+        .values_list('region', flat=True) \
+        .exclude(region__isnull=True)  # 排除空值
 
-    # 处理统计结果
     region_counts = defaultdict(int)
     for r in regions:
+        if not r:  # 跳过空字符串
+            continue
         normalized = normalize_region(r)
         region_counts[normalized] += 1
 
-    # 生成图表数据
+    # 生成图表数据（保持地图显示全部数据，柱状图/饼图显示TOP10）
     sorted_regions = sorted(region_counts.items(), key=lambda x: -x[1])
-    top10 = sorted_regions[:10]  # 取前10个地区
+    top10 = sorted_regions[:10]
 
     result = {
-        'regions': [r[0] for r in top10],  # 仅前10地区
-        'values': [r[1] for r in top10],  # 对应数值
-        'map_data': dict(sorted_regions)  # 地图仍显示全部数据
+        'regions': [r[0] for r in top10],
+        'values': [r[1] for r in top10],
+        'map_data': dict(sorted_regions)  # 包含所有标准化后的地区
     }
+
     # 缓存1小时
     cache.set(cache_key, result, 3600)
     return JsonResponse(result)
 
 
 # ----------------------------------------以上IP分析--------------------------------------------------------
+
+import os
+from collections import defaultdict
+from django.core.cache import cache
+from django.db import connection
+from django.http import JsonResponse
+from django.views import View
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from .models import HotBoard
+from .serializers import HotBoardSerializer
 
 
 def get_comment_table(rank):
@@ -330,16 +315,23 @@ def get_comment_texts(table_name, hot_board_id):
         return [row[0] for row in cursor.fetchall() if row[0].strip()]
 
 
-@shared_task
-def hot_data_analysis_task(hot_board_id):
+def hot_data_analysis(request):
+    hot_board_id = request.GET.get('hot_board_id')
+    if not hot_board_id:
+        return JsonResponse({'error': 'Missing hot_board_id'}, status=400)
+
     try:
         hot_board = HotBoard.objects.get(id=hot_board_id)
     except HotBoard.DoesNotExist:
-        return {'error': 'Invalid hot_board_id'}
+        return JsonResponse({'error': 'Invalid hot_board_id'}, status=404)
 
     table_name = get_comment_table(hot_board.rank)
     if not table_name:
-        return {'error': 'Invalid rank'}
+        return JsonResponse({'error': 'Invalid rank'}, status=400)
+
+    cache_key = f"hot_analysis_{hot_board_id}"
+    if cached := cache.get(cache_key):
+        return JsonResponse(cached)
 
     stop_words = load_stopwords()
 
@@ -378,7 +370,7 @@ def hot_data_analysis_task(hot_board_id):
     documents = [' '.join(row[2].split()) for row in rows if row[2].strip()]
 
     if not documents:
-        return {'error': '无有效文本数据'}
+        return JsonResponse({'error': '无有效文本数据'}, status=400)
 
     vectorizer = TfidfVectorizer(
         max_features=1000,
@@ -387,14 +379,14 @@ def hot_data_analysis_task(hot_board_id):
     try:
         tfidf_matrix = vectorizer.fit_transform(documents)
     except ValueError:
-        return {'error': '文本数据不足以生成特征'}
+        return JsonResponse({'error': '文本数据不足以生成特征'}, status=400)
 
     n_clusters = 10
     try:
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         kmeans.fit(tfidf_matrix)
     except Exception as e:
-        return {'error': f'聚类分析失败: {str(e)}'}
+        return JsonResponse({'error': f'聚类分析失败: {str(e)}'}, status=500)
 
     terms = vectorizer.get_feature_names_out()
     cluster_keywords = []
@@ -411,7 +403,7 @@ def hot_data_analysis_task(hot_board_id):
     ]
 
     if not candidates:
-        return {'error': '无有效候选热词'}
+        return JsonResponse({'error': '无有效候选热词'}, status=400)
 
     sorted_words = sorted(candidates, key=lambda x: -x[1])[:10]
     word_words = sorted(candidates, key=lambda x: -x[1])[:100]
@@ -436,22 +428,8 @@ def hot_data_analysis_task(hot_board_id):
         }
     }
 
-    cache.set(f"hot_analysis_{hot_board_id}", result, timeout=3600)
-    return result
-
-
-def hot_data_analysis(request):
-    hot_board_id = request.GET.get('hot_board_id')
-    if not hot_board_id:
-        return JsonResponse({'error': 'Missing hot_board_id'}, status=400)
-
-    cache_key = f"hot_analysis_{hot_board_id}"
-    if cached := cache.get(cache_key):
-        return JsonResponse(cached)
-
-    # 异步执行任务
-    task = hot_data_analysis_task.delay(hot_board_id)
-    return JsonResponse({'task_id': task.id}, status=202)
+    cache.set(cache_key, result, timeout=3600)
+    return JsonResponse(result)
 
 
 def get_cluster_data(request):

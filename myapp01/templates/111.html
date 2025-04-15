@@ -90,7 +90,7 @@
 {% block js %}
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
     <script>
-        (async function () {
+        (async function() {
             // 初始化地图数据
             let chartInstances = {};
             try {
@@ -113,13 +113,13 @@
                     colorPalette: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'],
 
                     // 图表类型切换
-                    changeChartType: function (type) {
+                    changeChartType: function(type) {
                         this.currentType = type;
                         if (this.currentHotId) this.loadData();
                     },
 
                     // 加载数据
-                    loadData: async function () {
+                    loadData: async function() {
                         const hotId = document.getElementById('hotSelect').value;
                         if (!hotId) return;
 
@@ -138,7 +138,7 @@
                     },
 
                     // 更新图表
-                    updateCharts: function (data) {
+                    updateCharts: function(data) {
                         // 更新柱状图/折线图
                         chartInstances.region.setOption(this.createChartOption(
                             data.regions || [],
@@ -160,20 +160,17 @@
                     },
 
                     // 创建基础图表配置
-                    createChartOption: function (regions, values) {
+                    createChartOption: function(regions, values) {
                         return {
-                            title: {
-                                text: this.currentType === 'bar' ? '地区分布TOP10' : '地区趋势分析',
-                                left: 'center'
-                            },
-                            tooltip: {trigger: 'axis'},
+                            title: { text: this.currentType === 'bar' ? '地区分布TOP10' : '地区趋势分析', left: 'center' },
+                            tooltip: { trigger: 'axis' },
                             xAxis: {
                                 type: 'category',
                                 data: regions,
-                                axisLabel: {rotate: 45, interval: 0}
+                                axisLabel: { rotate: 45, interval: 0 }
                             },
-                            yAxis: {type: 'value', name: '数量'},
-                            grid: {bottom: '20%', containLabel: true},
+                            yAxis: { type: 'value', name: '数量' },
+                            grid: { bottom: '20%', containLabel: true },
                             series: [{
                                 type: this.currentType,
                                 data: values,
@@ -184,11 +181,11 @@
                                     }
                                 } : {
                                     smooth: true,
-                                    lineStyle: {width: 3, color: this.colorPalette[0]},
+                                    lineStyle: { width: 3, color: this.colorPalette[0] },
                                     areaStyle: {
                                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                                            {offset: 0, color: 'rgba(84,112,198,0.6)'},
-                                            {offset: 1, color: 'rgba(84,112,198,0.1)'}
+                                            { offset: 0, color: 'rgba(84,112,198,0.6)' },
+                                            { offset: 1, color: 'rgba(84,112,198,0.1)' }
                                         ])
                                     }
                                 })
@@ -197,105 +194,67 @@
                     },
 
                     // 创建饼图配置
-                    createPieOption: function (regions, values) {
+                    createPieOption: function(regions, values) {
                         return {
-                            title: {text: '地区分布占比', left: 'center'},
-                            tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
+                            title: { text: '地区分布占比', left: 'center' },
+                            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
                             series: [{
                                 type: 'pie',
                                 radius: '50%',
                                 data: regions.map((r, i) => ({
                                     name: r,
                                     value: values[i],
-                                    itemStyle: {color: this.colorPalette[i % 5]}
+                                    itemStyle: { color: this.colorPalette[i % 5] }
                                 })),
-                                emphasis: {itemStyle: {shadowBlur: 10}}
+                                emphasis: { itemStyle: { shadowBlur: 10 } }
                             }]
                         };
                     },
 
                     // 创建地图配置
-                    createMapOption: function (mapData) {
+                    createMapOption: function(mapData) {
                         const maxValue = Math.max(...Object.values(mapData), 1);
                         return {
-                            title: {
-                                text: '地域分布地图',
-                                left: 'center',
-                                textStyle: {color: '#2c3e50', fontSize: 16}  // 标题优化
-                            },
-                            tooltip: {
-                                trigger: 'item',
-                                formatter: '{b}<br>数量: {c}',  // 优化提示格式
-                                textStyle: {fontSize: 12}
-                            },
+                            tooltip: { trigger: 'item', formatter: '{b}: {c}' },
                             visualMap: {
                                 min: 0,
                                 max: maxValue,
-                                left: 'left',       // 调整到左侧
-                                bottom: '10%',
-                                width: 15,          // 垂直方向
-                                type: 'continuous',
-                                inRange: {
-                                    // 蓝色渐变（主色调）
-                                    color: ['#E0F8FF', '#007BFF', '#0056F2']
-                                },
-                                textStyle: {color: '#666'},
-                                showLabel: true     // 显示数值标签
+                                left: '3%',
+                                bottom: '5%',
+                                calculable: true,
+                                inRange: { color: ['#e0f3f8', '#08519c'] }
                             },
                             series: [{
                                 type: 'map',
                                 map: 'china',
                                 roam: true,
-                                zoom: 1.2,          // 初始缩放比例
-                                label: {           // 省份名称样式
-                                    show: false,
-                                    color: '#333',
-                                    fontSize: 15,
-                                    fontWeight: 'normal'
-                                },
-                                itemStyle: {       // 核心样式配置
-                                    borderColor: '#00BFFF',   // 描边
-                                    borderWidth: 1.5,         // 描边宽度
-                                    areaColor: '#2979ff'      // 基础蓝色
-                                },
-                                emphasis: {        // 悬停效果优化
-                                    label: {
-                                        show: true,
-                                        color: '#fff',
-                                        fontSize: 12
-                                    },
-                                    itemStyle: {
-                                        borderColor: '#A9A9A9',   // 悬停时深绿描边
-                                        borderWidth: 2,
-                                        areaColor: '#007BFF'      // 悬停时加深蓝色
-                                    }
-                                },
                                 data: Object.entries(mapData).map(([name, value]) => ({
-                                    name,
-                                    value,
-                                    // 可添加额外数据用于自定义样式
-                                }))
+                                    name, value
+                                })),
+                                emphasis: {
+                                    label: { show: true, color: '#fff' },
+                                    itemStyle: { areaColor: '#2a333d' }
+                                }
                             }]
                         };
                     },
 
-
                     // 通用方法
-                    showLoading: function () {
+                    showLoading: function() {
                         Object.values(chartInstances).forEach(chart => chart.showLoading());
                     },
-                    hideLoading: function () {
+                    hideLoading: function() {
                         Object.values(chartInstances).forEach(chart => chart.hideLoading());
                     },
-                    refreshChart: function (type) {
+                    refreshChart: function(type) {
                         chartInstances[type]?.resize();
                     },
-                    downloadChart: function (type) {
+                    downloadChart: function(type) {
                         const chart = chartInstances[type];
                         if (!chart) return;
 
                         const a = document.createElement('a');
-                        a.href = chart.getDataURL({type: 'png', pixelRatio: 2});
+                        a.href = chart.getDataURL({ type: 'png', pixelRatio: 2 });
                         a.download = `${type}_chart_${new Date().getTime()}.png`;
                         a.click();
                     }
