@@ -215,69 +215,69 @@
                     },
 
                     // 创建地图配置
-                    createMapOption: function (mapData) {
-                        const maxValue = Math.max(...Object.values(mapData), 1);
-                        return {
-                            title: {
-                                text: '地域分布地图',
-                                left: 'center',
-                                textStyle: {color: '#2c3e50', fontSize: 16}  // 标题优化
-                            },
-                            tooltip: {
-                                trigger: 'item',
-                                formatter: '{b}<br>数量: {c}',  // 优化提示格式
-                                textStyle: {fontSize: 12}
-                            },
-                            visualMap: {
-                                min: 0,
-                                max: maxValue,
-                                left: 'left',       // 调整到左侧
-                                bottom: '10%',
-                                width: 15,          // 垂直方向
-                                type: 'continuous',
-                                inRange: {
-                                    // 蓝色渐变（主色调）
-                                    color: ['#E0F8FF', '#007BFF', '#0056F2']
-                                },
-                                textStyle: {color: '#666'},
-                                showLabel: true     // 显示数值标签
-                            },
-                            series: [{
-                                type: 'map',
-                                map: 'china',
-                                roam: true,
-                                zoom: 1.2,          // 初始缩放比例
-                                label: {           // 省份名称样式
-                                    show: false,
-                                    color: '#333',
-                                    fontSize: 15,
-                                    fontWeight: 'normal'
-                                },
-                                itemStyle: {       // 核心样式配置
-                                    borderColor: '#00BFFF',   // 描边
-                                    borderWidth: 1.5,         // 描边宽度
-                                    areaColor: '#2979ff'      // 基础蓝色
-                                },
-                                emphasis: {        // 悬停效果优化
-                                    label: {
-                                        show: true,
-                                        color: '#fff',
-                                        fontSize: 12
-                                    },
-                                    itemStyle: {
-                                        borderColor: '#A9A9A9',   // 悬停时深绿描边
-                                        borderWidth: 2,
-                                        areaColor: '#007BFF'      // 悬停时加深蓝色
-                                    }
-                                },
-                                data: Object.entries(mapData).map(([name, value]) => ({
-                                    name,
-                                    value,
-                                    // 可添加额外数据用于自定义样式
-                                }))
-                            }]
-                        };
-                    },
+createMapOption: function (mapData) {
+    const maxValue = Math.max(...Object.values(mapData), 1);
+    return {
+        title: {
+            text: '地域分布地图',
+            left: 'center',
+            textStyle: {color: '#2c3e50', fontSize: 16}  // 标题优化
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}<br>数量: {c}',  // 优化提示格式
+            textStyle: {fontSize: 12}
+        },
+        visualMap: {
+            min: 0,
+            max: maxValue,
+            left: 'left',       // 调整到左侧
+            bottom: '10%',
+            width: 15,          // 垂直方向
+            type: 'continuous',
+            inRange: {
+                // 浅黄色到橙红色渐变
+                color: ['#FFFFE0', '#FFA500', '#FF4500']
+            },
+            textStyle: {color: '#666'},
+            showLabel: true     // 显示数值标签
+        },
+        series: [{
+            type: 'map',
+            map: 'china',
+            roam: true,
+            zoom: 1.2,          // 初始缩放比例
+            label: {           // 省份名称样式
+                show: true,
+                color: '#333',
+                fontSize: 13,
+                fontWeight: 'normal'
+            },
+            itemStyle: {       // 核心样式配置
+                borderColor: '#00BFFF',   // 描边
+                borderWidth: 1.5,         // 描边宽度
+                areaColor: '#FFFFE0'      // 基础浅黄色
+            },
+            emphasis: {        // 悬停效果优化
+                label: {
+                    show: true,
+                    color: '#fff',
+                    fontSize: 12
+                },
+                itemStyle: {
+                    borderColor: '#A9A9A9',   // 悬停时深绿描边
+                    borderWidth: 2,
+                    areaColor: '#007BFF'      // 悬停时蓝色
+                }
+            },
+            data: Object.entries(mapData).map(([name, value]) => ({
+                name,
+                value,
+                // 可添加额外数据用于自定义样式
+            }))
+        }]
+    };
+},
 
 
                     // 通用方法
