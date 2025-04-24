@@ -1,0 +1,259 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="{% static 'css/hot_in.css' %}">
+<style>
+    .dataTable th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .dataTable tr:hover td {
+        background-color: #f1f3f5 !important;
+    }
+    #loading {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin: 20px 0;
+    }
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #e9ecef;
+        border-top-color: #1971c2;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    #hotspotSelect {
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+    }
+    #hotspotSelect:focus {
+        border-color: #4dabf7;
+        box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h3 class="mb-4" style="text-align: center">热门视频评论分析</h3>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center gap-3">
+                <label for="hotspotSelect" class="form-label mb-0">选择分析目标：</label>
+                <select id="hotspotSelect" class="form-select">
+                    <option value="">加载热搜数据中...</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading">
+        <div class="loading-spinner"></div>
+        <span>正在加载评论数据...</span>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <table id="dataTable" class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th width="15%">👤 用户昵称</th>
+                        <th width="40%">💬 评论内容</th>
+                        <th width="12%">❤️ 点赞数</th>
+                        <th width="18%">🕒 发布时间</th>
+                        <th width="15%">🌍 地区</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="noData">
+                        <td colspan="5" class="text-center text-muted py-4">
+                            请从上方选择需要分析的热搜话题
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    // 初始化加载热搜列表
+    document.addEventListener('DOMContentLoaded', async () => {
+        const select = document.getElementById('hotspotSelect');
+        const loading = document.getElementById('loading');
+
+        const showLoading = (show) => {
+            if (loading) loading.style.display = show ? 'flex' : 'none';
+        };
+
+        try {
+            showLoading(true);
+
+            // 获取热搜数据
+            const response = await fetch('/api/hot_boards/');
+            if (!response.ok) throw new Error(`HTTP错误! 状态码: ${response.status}`);
+
+            const hotBoards = await response.json();
+
+            // 渲染下拉选项
+            select.innerHTML = hotBoards.map(board =>
+                `<option value="${board.id}">${board.title}</option>`
+            ).join('');
+
+            // 添加事件监听
+            select.addEventListener('change', () => {
+                if (select.value) loadComments(select.value);
+            });
+
+            // 默认加载第一条
+            if (hotBoards.length > 0) {
+                select.value = hotBoards[0].id;
+                loadComments(hotBoards[0].id);
+            }
+        } catch (error) {
+            console.error('初始化失败:', error);
+            select.innerHTML = `<option value="">数据加载失败 - ${error.message}</option>`;
+        } finally {
+            showLoading(false);
+        }
+    });
+
+    // 加载评论数据
+    async function loadComments(hotId) {
+        const tbody = document.querySelector("#dataTable tbody");
+        const loading = document.getElementById('loading');
+        const noDataRow = document.getElementById('noData');
+
+        const clearTable = () => {
+            tbody.innerHTML = '';
+            if (noDataRow) noDataRow.style.display = 'none';
+        };
+
+        const showError = (message) => {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-danger py-3">
+                        ⚠️ ${message}
+                    </td>
+                </tr>
+            `;
+        };
+
+        try {
+            // 参数验证
+            if (!hotId || isNaN(hotId)) {
+                throw new Error('无效的热搜ID');
+            }
+
+            clearTable();
+            loading.style.display = 'flex';
+
+            // 发起请求
+            const response = await fetch(`/api/comments/?hotId=${encodeURIComponent(hotId)}`);
+            console.debug('API响应:', response);
+
+            if (!response.ok) {
+                throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+            }
+
+            const comments = await response.json();
+            console.debug('收到的评论数据:', comments);
+
+            // 处理空数据
+            if (!comments || comments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            🕳️ 当前话题暂无评论数据
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // 渲染数据
+            comments.forEach(comment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="align-middle">${escapeHTML(comment.nickname) || '匿名用户'}</td>
+                    <td class="align-middle">${emojify(escapeHTML(comment.content))}</td>
+                    <td class="align-middle text-nowrap">${formatLikes(comment.likes)}</td>
+                    <td class="align-middle text-nowrap">${formatTime(comment.date)}</td>
+                    <td class="align-middle">${comment.region ? escapeHTML(comment.region) : '🌐 未知'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+        } catch (error) {
+            console.error('加载评论失败:', error);
+            showError(`数据加载失败: ${error.message}`);
+        } finally {
+            loading.style.display = 'none';
+            if (tbody.children.length === 0 && noDataRow) {
+                noDataRow.style.display = '';
+            }
+        }
+    }
+
+    // 实用工具函数
+    function escapeHTML(str) {
+        return str?.replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;',
+            '"': '&quot;', "'": '&#39;'
+        }[m])) || '';
+    }
+
+    function emojify(text) {
+        const emojiMap = {
+            '[赞]': '👍', '[心]': '❤️', '[笑]': '😄',
+            '[鲜花]': '🌸', '[鼓掌]': '👏', '[泪]': '😢'
+        };
+        return text.replace(/\[(.*?)\]/g, (m, p1) =>
+            emojiMap[m] || p1 ? `[${p1}]` : m
+        );
+    }
+
+    function formatLikes(num) {
+        num = parseInt(num) || 0;
+        if (num >= 1e8) return `${(num/1e8).toFixed(1)}亿`;
+        if (num >= 1e4) return `${(num/1e4).toFixed(1)}万`;
+        if (num >= 1e3) return `${(num/1e3).toFixed(1)}千`;
+        return num.toLocaleString();
+    }
+
+    function formatTime(isoString) {
+        try {
+            const date = new Date(isoString);
+            if (isNaN(date)) return '时间未知';
+
+            const now = new Date();
+            const diffSec = Math.round((now - date) / 1e3);
+
+            if (diffSec < 60) return '刚刚';
+            if (diffSec < 3600) return `${Math.floor(diffSec/60)}分钟前`;
+            if (diffSec < 86400) return `${Math.floor(diffSec/3600)}小时前`;
+
+            return date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).replace(/\//g, '-');
+        } catch {
+            return '时间未知';
+        }
+    }
+</script>
+{% endblock %}

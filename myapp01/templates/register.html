@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>注册界面</title>
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+    <script src="{% static 'js/type.js' %}"></script>
+</head>
+<body>
+<div id="site-subtitle" style="padding-bottom: 55px;font-size: 50px;color:white;">
+    <span id="subtitle"></span>
+    <span class="typed-cursor" aria-hidden="true"></span>
+</div>
+<div class="login-container">
+    <div class="login-box">
+        <div class="avatar-container">
+            <img src="{% static '/img/抖音.jpg' %}" alt="用户头像" class="avatar">
+        </div>
+        <form method="post" action="/register/">
+            {% csrf_token %}
+            <div class="input-container">
+                <i class="icon-mail"></i>
+                <input type="text" name="email" placeholder="邮箱">
+                <div style="color: red">{{ msg }}</div>
+            </div>
+            <div class="input-container">
+                <i class="icon-lock"></i>
+                <input type="password" name="pwd" placeholder="请输入密码">
+                 <div style="color: red">{{ emsg }}</div>
+            </div>
+{#            <div class="input-container">#}
+{#                <i class="icon-lock"></i>#}
+{#                <input type="password" name="cpwd" placeholder="再次输入密码">#}
+{##}
+{#            </div>#}
+            <div style="color: red">{{ errmsg }}</div>
+            <input type="submit" value="注册" class="login-btn">
+            <div>
+                <a href="/login/" style="color: dodgerblue;">已有账号，立即登录</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

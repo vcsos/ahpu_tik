@@ -1,0 +1,98 @@
+body {
+    background-size: cover;
+    background: url("../img/星空.png") no-repeat center;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/*渐入式动画文字*/
+#site-subtitle {
+    overflow: hidden;
+    display: inline-block;
+}
+
+#subtitle {
+    display: inline-block;
+}
+
+.login-container {
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.login-box {
+    text-align: center;
+}
+
+.avatar-container {
+    margin-bottom: 20px;
+}
+
+.avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 25%;
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+.icon-mail,
+.icon-lock {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 250px;
+    padding: 10px 10px 10px 30px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    outline: none;
+}
+
+.login-btn {
+    background-color: #fff;
+    color: #333;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+    background-color: #f2f2f2;
+}
+
+.link-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.register-link,
+.forgot-password-link {
+    text-decoration: none;
+    color: #888;
+    font-size: 14px;
+}
+
+.register-link:hover,
+.forgot-password-link:hover {
+    color: #333;
+}

@@ -1,0 +1,84 @@
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* 下拉菜单样式 */
+label {
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 16px;
+    color: #444;
+}
+
+select {
+    padding: 12px 40px 12px 20px;
+    font-size: 16px;
+    border: 2px solid #007BFF;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="%23007BFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 320px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+select:hover {
+    border-color: #0056b3;
+    background-color: #e9ecef;
+}
+
+select:focus {
+    outline: none;
+    border-color: #0056b3;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* 图表容器样式 */
+.chart-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+/* 图表操作按钮 */
+.chart-icons {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    z-index: 1000;
+}
+
+.chart-icons img {
+    width: 20px;
+    height: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.chart-icons img:hover {
+    transform: scale(1.2);
+}
+
+
+/*!* 优化滚动条样式 *!*/
+/*::-webkit-scrollbar {*/
+/*    width: 6px;*/
+/*    height: 6px;*/
+/*}*/
+
+/*::-webkit-scrollbar-thumb {*/
+/*    background: rgba(0, 123, 255, 0.3);*/
+/*    border-radius: 3px;*/
+/*}*/
