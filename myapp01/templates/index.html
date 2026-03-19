@@ -1,0 +1,349 @@
+{% extends 'layout.html' %}
+{% load humanize %}
+{% block css %}
+    <style>
+        /* 表格样式优化 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .data-table th {
+            background-color: #fafafa;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        .data-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .data-table .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .data-table .status.normal {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .data-table .status.hot {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        /* 图表容器样式 */
+        .chart-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            height: 480px; /* 固定高度 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container > div {
+            flex: 1;
+            min-height: 400px;
+        }
+
+        /* 统一标题样式 */
+        .chart-title {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: auto;
+                padding: 15px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <!-- 数据总览 -->
+<div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-thumbs-up fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ max_like_count|intcomma }}</h3>
+                        <small class="text-muted">最高评论点赞数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-star fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ max_collects|intcomma }}</h3>
+                        <small class="text-muted">最高收藏数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-fire fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ max_hot_value|intcomma }}</h3>
+                        <small class="text-muted">最高热度值</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="data-card">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3">
+                        <i class="fa fa-share-alt fa-2x"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0">{{ max_shares|intcomma }}</h3>
+                        <small class="text-muted">最高分享数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="chart-title">📊 热搜热度排行</h5>
+                <div id="hotBoardChart"></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="chart-title">🔥 热榜TOP3</h5>
+                <div id="top3Chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="chart-container mt-4">
+        <h5 class="chart-title">📋 最新舆情数据</h5>
+<table class="table data-table">
+            <thead>
+                <tr>
+                    <th>视频ID</th>
+                    <th>文案</th>
+                    <th>用户昵称</th>
+                    <th>收藏</th>
+                    <th>分享</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for video in latest_videos %}
+                <tr>
+                    <td>{{ video.video_id|truncatechars:15 }}</td>
+                    <td>{{ video.caption|truncatechars:30 }}</td>
+                    <td>{{ video.user }}</td>
+                    <td>{{ video.collects|intcomma }}</td>
+                    <td>{{ video.shares|intcomma }}</td>
+                    <td>
+                        <span class="status {% if video.popularity == '热门' %}hot{% else %}normal{% endif %}">
+                            {{ video.popularity }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+<script>
+    // 统一配置参数
+    const commonGrid = {
+        top: 80,
+        bottom: 40,
+        left: '10%',
+        right: '10%',
+        containLabel: true
+    };
+
+
+
+    // 数据缓存
+    const dataCache = {
+        hotboards: null,
+        lastFetchTime: 0
+    };
+
+    // 获取热搜数据
+    async function fetchHotBoardData() {
+        const now = Date.now();
+        // 缓存5分钟
+        if (dataCache.hotboards && (now - dataCache.lastFetchTime) < 5 * 60 * 1000) {
+            return dataCache.hotboards;
+        }
+
+        try {
+            const response = await fetch('/api/hot_boards/');
+            if (!response.ok) throw new Error('数据加载失败');
+            const data = await response.json();
+            dataCache.hotboards = data;
+            dataCache.lastFetchTime = now;
+            return data;
+        } catch (error) {
+            console.error('获取热搜数据失败:', error);
+            // 使用缓存数据作为 fallback
+            return dataCache.hotboards || [];
+        }
+    }
+
+    // 初始化图表
+    let hotChart, top3Chart;
+    window.addEventListener('load', async () => {
+        // 优先加载数据
+        const hotData = await fetchHotBoardData();
+        
+        // 初始化图表
+        hotChart = initHotBoardChart(hotData);
+        top3Chart = initTop3Chart(hotData);
+    });
+
+    // 优化热搜热度排行图表
+    function initHotBoardChart(hotData) {
+        const chart = echarts.init(document.getElementById('hotBoardChart'));
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                formatter: '{b}: {c} 热度值'
+            },
+            grid: commonGrid,
+            xAxis: {
+                type: 'category',
+                data: hotData.map(item => item.keyword),
+                axisLabel: {
+                    rotate: 45,
+                    interval: 0,
+                    hideOverlap: true
+                },
+                axisLine: { show: false },
+                axisTick: { show: false }
+            },
+            yAxis: {
+                type: 'value',
+                name: '热度值',
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#666',
+                        width: 1
+                    }
+                }
+            },
+            series: [{
+                data: hotData.map(item => item.hot_value),
+                type: 'bar',
+                barWidth: '60%',
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        {offset: 0, color: '#36a2eb'},
+                        {offset: 1, color: '#9acfea'}
+                    ])
+                }
+            }]
+        };
+        chart.setOption(option);
+        return chart;
+    }
+
+    // 优化热榜TOP3图表
+    function initTop3Chart(hotData) {
+        const chart = echarts.init(document.getElementById('top3Chart'));
+
+        const top3Data = hotData
+            .sort((a, b) => b.hot_value - a.hot_value)
+            .slice(0, 3);
+
+        const option = {
+            tooltip: {
+                trigger: 'item',
+                formatter: '{b}: {c} 热度值'
+            },
+            grid: commonGrid,
+            xAxis: { show: false },
+            yAxis: {
+                type: 'category',
+                data: top3Data.map(item => item.keyword),
+                inverse: true,
+                axisLine: {
+                    show: true,
+                    lineStyle: {
+                        color: '#666',
+                        width: 1
+                    }
+                }
+            },
+            series: [{
+                type: 'bar',
+                data: top3Data.map(item => item.hot_value),
+                barWidth: 20,
+                itemStyle: {
+                    color: ({ dataIndex }) => [
+                        '#ff6b6b', '#fbc531', '#2ecc71'
+                    ][dataIndex],
+                    borderRadius: [10, 10, 0, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'right',
+                    formatter: ({ dataIndex }) => [
+                        '🥇 ', '🥈 ', '🥉 '
+                    ][dataIndex],
+                    fontSize: 24
+                }
+            }]
+        };
+        chart.setOption(option);
+        return chart;
+    }
+
+    // 优化响应式
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            hotChart?.resize();
+            top3Chart?.resize();
+        }, 200);
+    });
+</script>
+{% endblock %}

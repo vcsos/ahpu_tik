@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录界面</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+<script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'plugins/bootstrap5.3.0/js/bootstrap.min.js' %}"></script>
+<div id="site-subtitle" style="padding-bottom: 80px;font-size: 50px;color:white;">
+    <span id="subtitle"></span>
+    <span class="typed-cursor" aria-hidden="true"></span>
+</div>
+<div class="login-container">
+    <div class="login-box">
+        <div class="avatar-container">
+            <img src="{% static '/img/抖音.jpg' %}" alt="用户头像" class="avatar">
+        </div>
+        <form method="post" action='/login/'>
+
+                {% csrf_token %}
+            <div class="input-container">
+                <i class="icon-mail"></i>
+                <input type="text" name="email" placeholder="邮箱">
+                <div style="color: red">{{ msg2 }}</div>
+            </div>
+            <div class="input-container">
+                <i class="icon-lock"></i>
+                <input type="password" name="pwd" placeholder="登录密码">
+                <div style="color: red">{{ msg3 }}</div>
+            </div>
+         <div style="color: red">{{ msg1 }}</div>
+            <input type="submit" value="登录" class="login-btn">
+            <div class="link-container">
+                <a href="/register/" class="register-link">立即注册</a>
+                <a href="#" class="forgot-password-link">忘记密码</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/type.js' %}"></script>
+</body>
+</html>

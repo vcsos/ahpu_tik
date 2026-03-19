@@ -1,0 +1,339 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .chart-icons {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .chart-icons img {
+            width: 24px;
+            height: 24px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .chart-icons img:hover {
+            opacity: 0.7;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>IP地域分布分析</h1>
+    <div>
+        <div style="margin: 20px 0; display: flex; align-items: center;">
+            <select id="hotSelect" class="form-control" style="width: 300px;">
+                <option value="">加载中...</option>
+            </select>
+        </div>
+
+        <div class="chart-row">
+            <div class="chart-container">
+                <div class="chart-icons">
+                    <img src="https://img.icons8.com/ios/50/000000/bar-chart.png" alt="柱状图"
+                         onclick="window.chartHandler.changeChartType('bar')">
+                    <img src="https://img.icons8.com/ios/50/000000/line-chart.png" alt="折线图"
+                         onclick="window.chartHandler.changeChartType('line')">
+                    <img src="https://img.icons8.com/ios/50/000000/download--v1.png" alt="下载"
+                         onclick="window.chartHandler.downloadChart('region')">
+                    <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" alt="刷新"
+                         onclick="window.chartHandler.refreshChart('region')">
+                </div>
+                <div id="regionChart" style="width: 100%; height: 500px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-icons">
+                    <img src="https://img.icons8.com/ios/50/000000/download--v1.png" alt="下载"
+                         onclick="window.chartHandler.downloadChart('pie')">
+                    <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" alt="刷新"
+                         onclick="window.chartHandler.refreshChart('pie')">
+                </div>
+                <div id="regionPieChart" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-icons">
+                <img src="https://img.icons8.com/ios/50/000000/download--v1.png" alt="下载"
+                     onclick="window.chartHandler.downloadChart('map')">
+                <img src="https://img.icons8.com/ios/50/000000/refresh--v1.png" alt="刷新"
+                     onclick="window.chartHandler.refreshChart('map')">
+            </div>
+            <div id="chinaMapChart" style="width: 100%; height: 600px;"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <script>
+        (async function () {
+            // 初始化地图数据
+            let chartInstances = {};
+            try {
+                // 加载并注册自定义地图
+                const geojsonResponse = await fetch("{% static 'plugins/中国_省.geojson' %}");
+                const chinaGeoJSON = await geojsonResponse.json();
+                echarts.registerMap('china', chinaGeoJSON);
+
+                // 初始化图表实例
+                chartInstances = {
+                    region: echarts.init(document.getElementById('regionChart')),
+                    pie: echarts.init(document.getElementById('regionPieChart')),
+                    map: echarts.init(document.getElementById('chinaMapChart'))
+                };
+
+                // 全局图表处理器
+                window.chartHandler = {
+                    currentType: 'bar',
+                    currentHotId: null,
+                    colorPalette: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de'],
+
+                    // 图表类型切换
+                    changeChartType: function (type) {
+                        this.currentType = type;
+                        if (this.currentHotId) this.loadData();
+                    },
+
+                    // 加载数据
+                    loadData: async function () {
+                        const hotId = document.getElementById('hotSelect').value;
+                        if (!hotId) return;
+
+                        try {
+                            this.showLoading();
+                            const response = await fetch(`/api/region_distribution/?hot_search_id=${hotId}`);
+                            if (!response.ok) throw new Error('数据加载失败');
+
+                            const data = await response.json();
+                            this.currentHotId = hotId;
+                            this.updateCharts(data);
+                        } catch (error) {
+                            console.error('数据加载失败:', error);
+                            this.hideLoading();
+                        }
+                    },
+
+                    // 更新图表
+                    updateCharts: function (data) {
+                        // 更新柱状图/折线图
+                        chartInstances.region.setOption(this.createChartOption(
+                            data.regions || [],
+                            data.values || []
+                        ));
+
+                        // 更新饼图
+                        chartInstances.pie.setOption(this.createPieOption(
+                            data.regions || [],
+                            data.values || []
+                        ));
+
+                        // 更新地图
+                        chartInstances.map.setOption(this.createMapOption(
+                            data.map_data || {}
+                        ));
+
+                        this.hideLoading();
+                    },
+
+                    // 创建基础图表配置
+                    createChartOption: function (regions, values) {
+                        return {
+                            title: {
+                                text: this.currentType === 'bar' ? '地区分布TOP10' : '地区趋势分析',
+                                left: 'center'
+                            },
+                            tooltip: {trigger: 'axis'},
+                            xAxis: {
+                                type: 'category',
+                                data: regions,
+                                axisLabel: {rotate: 45, interval: 0}
+                            },
+                            yAxis: {type: 'value', name: '数量'},
+                            grid: {bottom: '20%', containLabel: true},
+                            series: [{
+                                type: this.currentType,
+                                data: values,
+                                ...(this.currentType === 'bar' ? {
+                                    barMaxWidth: 40,
+                                    itemStyle: {
+                                        color: (params) => this.colorPalette[params.dataIndex % 5]
+                                    }
+                                } : {
+                                    smooth: true,
+                                    lineStyle: {width: 3, color: this.colorPalette[0]},
+                                    areaStyle: {
+                                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                            {offset: 0, color: 'rgba(84,112,198,0.6)'},
+                                            {offset: 1, color: 'rgba(84,112,198,0.1)'}
+                                        ])
+                                    }
+                                })
+                            }]
+                        };
+                    },
+
+                    // 创建饼图配置
+                    createPieOption: function (regions, values) {
+                        return {
+                            title: {text: '地区分布占比', left: 'center'},
+                            tooltip: {trigger: 'item', formatter: '{b}: {c} ({d}%)'},
+                            series: [{
+                                type: 'pie',
+                                radius: '50%',
+                                data: regions.map((r, i) => ({
+                                    name: r,
+                                    value: values[i],
+                                    itemStyle: {color: this.colorPalette[i % 5]}
+                                })),
+                                emphasis: {itemStyle: {shadowBlur: 10}}
+                            }]
+                        };
+                    },
+
+                    // 创建地图配置
+createMapOption: function (mapData) {
+    const maxValue = Math.max(...Object.values(mapData), 1);
+    return {
+        title: {
+            text: '地域分布地图',
+            left: 'center',
+            textStyle: {color: '#2c3e50', fontSize: 16}  // 标题优化
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}<br>数量: {c}',  // 优化提示格式
+            textStyle: {fontSize: 12}
+        },
+        visualMap: {
+            min: 0,
+            max: maxValue,
+            left: 'left',       // 调整到左侧
+            bottom: '10%',
+            width: 15,          // 垂直方向
+            type: 'continuous',
+            inRange: {
+                // 浅黄色到橙红色渐变
+                color: ['#FFFFE0', '#FFA500', '#FF4500']
+            },
+            textStyle: {color: '#666'},
+            showLabel: true     // 显示数值标签
+        },
+        series: [{
+            type: 'map',
+            map: 'china',
+            roam: true,
+            zoom: 1.2,          // 初始缩放比例
+            label: {           // 省份名称样式
+                show: true,
+                color: '#333',
+                fontSize: 13,
+                fontWeight: 'normal'
+            },
+            itemStyle: {       // 核心样式配置
+                borderColor: '#00BFFF',   // 描边
+                borderWidth: 1.5,         // 描边宽度
+                areaColor: '#FFFFE0'      // 基础浅黄色
+            },
+            emphasis: {        // 悬停效果优化
+                label: {
+                    show: true,
+                    color: '#fff',
+                    fontSize: 12
+                },
+                itemStyle: {
+                    borderColor: '#A9A9A9',   // 悬停时深绿描边
+                    borderWidth: 2,
+                    areaColor: '#007BFF'      // 悬停时蓝色
+                }
+            },
+            data: Object.entries(mapData).map(([name, value]) => ({
+                name,
+                value,
+                // 可添加额外数据用于自定义样式
+            }))
+        }]
+    };
+},
+
+
+                    // 通用方法
+                    showLoading: function () {
+                        Object.values(chartInstances).forEach(chart => chart.showLoading());
+                    },
+                    hideLoading: function () {
+                        Object.values(chartInstances).forEach(chart => chart.hideLoading());
+                    },
+                    refreshChart: function (type) {
+                        chartInstances[type]?.resize();
+                    },
+                    downloadChart: function (type) {
+                        const chart = chartInstances[type];
+                        if (!chart) return;
+
+                        const a = document.createElement('a');
+                        a.href = chart.getDataURL({type: 'png', pixelRatio: 2});
+                        a.download = `${type}_chart_${new Date().getTime()}.png`;
+                        a.click();
+                    }
+                };
+
+                // 初始化热榜数据
+                const loadHotList = async () => {
+                    try {
+                        const response = await fetch('/api/hot_boards/');
+                        const hots = await response.json();
+
+                        const select = document.getElementById('hotSelect');
+                        select.innerHTML = hots.map(h =>
+                            `<option value="${h.id}">${h.rank}. ${h.keyword}</option>`
+                        ).join('');
+
+                        select.onchange = () => window.chartHandler.loadData();
+                        if (hots.length) {
+                            select.value = hots[0].id;
+                            window.chartHandler.loadData();
+                        }
+                    } catch (error) {
+                        console.error('加载热榜失败:', error);
+                        document.getElementById('hotSelect').innerHTML =
+                            '<option value="">数据加载失败</option>';
+                    }
+                };
+
+                // 启动初始化
+                await loadHotList();
+                window.addEventListener('resize', () => {
+                    Object.values(chartInstances).forEach(chart => chart.resize());
+                });
+
+            } catch (error) {
+                console.error('初始化失败:', error);
+                document.body.innerHTML = `<div class="alert alert-danger">地图加载失败，请刷新重试</div>`;
+            }
+        })();
+    </script>
+{% endblock %}

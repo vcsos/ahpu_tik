@@ -1,0 +1,149 @@
+:root {
+    --primary-color: #2c7be5;
+    --sidebar-width: 280px;
+}
+
+body {
+    background: #f8f9fa;
+    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+/* 侧边栏样式 */
+.sidebar {
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: white;
+    position: fixed;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+    padding: 2rem;
+    border-bottom: 1px solid #eee;
+}
+
+.nav-link {
+    padding: 12px 25px;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.nav-link:hover {
+    background: rgba(44, 123, 229, 0.1);
+    color: var(--primary-color);
+}
+
+/* 数据卡片样式 */
+.data-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+}
+
+.data-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(44, 123, 229, 0.2);
+}
+
+/* 图表容器 */
+.chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* 表格样式 */
+.data-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.data-table th {
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem !important;
+}
+
+.avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 100%;
+}
+
+/* 顶部导航栏样式 */
+.main-navbar {
+    background: whitesmoke !important;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    height: 50px;
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    margin-left: var(--sidebar-width); /* 确保导航栏位于侧边栏右侧 */
+}
+
+.main-navbar .navbar-toggler {
+    border: none;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    padding: 0.5rem;
+    margin-right: 1rem;
+}
+
+.main-navbar .navbar-toggler:hover {
+    background: rgba(44, 123, 229, 0.1);
+    border-radius: 50%;
+}
+/* 添加折叠菜单样式 */
+.nav-item .collapse {
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    margin: 2px 0;
+}
+
+.nav-item .nav-link.collapsed .toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.nav-item .nav-link:not(.collapsed) .toggle-icon {
+    transform: rotate(90deg);
+}
+
+.ps-4 {
+    padding-left: 1.5rem !important;
+}
+
+/* 主内容区域 */
+main {
+    margin-left: var(--sidebar-width);
+    padding: 2rem;
+}
+
+
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+        height: 400px;
+    }
+
+    #hotSelect {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+}
+
+/* 图表标题样式 */
+.echarts-title {
+    font-size: 16px !important;
+    color: #333 !important;
+}
