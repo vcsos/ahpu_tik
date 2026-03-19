@@ -5,7 +5,7 @@ from myapp01.models import CommentHot1, CommentHot2, CommentHot3, CommentHot4, C
 
 class Command(BaseCommand):
     help = '对评论数据进行情感分析'
-
+#测试
     def handle(self, *args, **options):
         self.stdout.write('开始情感分析...')
         # 模拟情感分析，实际项目中可以使用真实的NLP模型
